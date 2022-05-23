@@ -19,8 +19,9 @@ bilisubdl 37738 --list-subs
 bilisubdl [id] [flags]
 
 Flags:
-  -h, --help          help for bilisubdl
-  -l, --lang string   Subtitle langague to download
-      --list-subs     List available subtitles language
-  -v, --version       version for bilisubdl
+  -h, --help              help for bilisubdl
+  -l, --language string   Subtitle language to download (e.g. en)
+      --list-subs         List available subtitles language
+  -r, --replace           Replace existing subtitles
+  -v, --version           version for bilisubdl
 ```
