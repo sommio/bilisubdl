@@ -19,7 +19,7 @@ var (
 
 var RootCmd = &cobra.Command{
 	Use:     "bilisubdl",
-	Version: "1.1.0",
+	Version: "1.1.1",
 	Run: func(cmd *cobra.Command, args []string) {
 		if language == "" && !listSubs {
 			log.Fatalln("No input language")
@@ -63,7 +63,7 @@ func Run(id string) {
 			log.Fatalln(err)
 		}
 	}
-	
+
 	out:
 	for _, j := range epList.Data.Sections {
 		if !listSubs {
