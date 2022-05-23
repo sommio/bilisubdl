@@ -14,11 +14,12 @@ import (
 var (
 	language string
 	listSubs bool
+	replace  bool
 )
 
 var RootCmd = &cobra.Command{
 	Use:     "bilisubdl",
-	Version: "1.0.1",
+	Version: "1.1.0",
 	Run: func(cmd *cobra.Command, args []string) {
 		if language == "" && !listSubs {
 			log.Fatalln("No input language")
@@ -33,13 +34,13 @@ func init() {
 	rootFlags := RootCmd.PersistentFlags()
 	rootFlags.StringVarP(&language, "lang", "l", "", "Subtitle langague to download (e.g. en)")
 	rootFlags.BoolVar(&listSubs, "list-subs", false, "List available subtitles language")
+	rootFlags.BoolVarP(&replace, "replace", "r", false, "Replace existing subtitles")
 }
 
 func Run(id string) {
 	var (
 		title,
 		subSRT,
-		episode_title,
 		filename string
 		episode *bilibili.Episode
 		sub     *bilibili.Subtitle
@@ -76,20 +77,23 @@ func Run(id string) {
 			continue
 		}
 
+		filename = filepath.Join(title, fmt.Sprintf("%s.%s.srt", utils.CleanText(s.TitleDisplay), language))
+		if _, err := os.Stat(filename); err == nil && !replace {
+			log.Println("Already exists:", filename)
+			continue
+		}
+
 		sub, err = episode.GetSubtitleJSON(language)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
 		subSRT = bilibili.SubToSRT(*sub)
-
-		episode_title = utils.CleanText(s.TitleDisplay)
-		filename = filepath.Join(title, fmt.Sprintf("%s.%s.srt", episode_title, language))
 		err := utils.CreateSubFile(filename, subSRT)
 		if err != nil {
 			log.Fatalln(err)
 		}
 		log.Println("Writing subtitle to:", filename)
 	}
-	log.Println("Finished Downloading: ", info.Data.Season.Title)
+	log.Println("Finished Downloading:", info.Data.Season.Title)
 }
