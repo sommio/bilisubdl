@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	language string
-	listSubs bool
-	replace  bool
+	language  string
+	listSubs  bool
+	overwrite bool
 )
 
 var RootCmd = &cobra.Command{
@@ -34,7 +34,7 @@ func init() {
 	rootFlags := RootCmd.PersistentFlags()
 	rootFlags.StringVarP(&language, "language", "l", "", "Subtitle language to download (e.g. en)")
 	rootFlags.BoolVar(&listSubs, "list-subs", false, "List available subtitles language")
-	rootFlags.BoolVarP(&replace, "replace", "r", false, "Replace existing subtitles")
+	rootFlags.BoolVarP(&overwrite, "overwrite", "w", false, "Force overwrite downloaded subtitles")
 }
 
 func Run(id string) {
@@ -55,42 +55,45 @@ func Run(id string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	
-	title = utils.CleanText(info.Data.Season.Title)
+
 	if !listSubs {
+		title = utils.CleanText(info.Data.Season.Title)
 		err = os.MkdirAll(title, os.ModePerm)
 		if err != nil {
 			log.Fatalln(err)
 		}
 	}
-
+	
+	out:
 	for _, j := range epList.Data.Sections {
-		log.Println("Episode List:", j.EpListTitle)
+		if !listSubs {
+			log.Println("Episode List:", j.EpListTitle)
+		}
 		for _, s := range j.Episodes {
 			filename = filepath.Join(title, fmt.Sprintf("%s.%s.srt", utils.CleanText(s.TitleDisplay), language))
-			if _, err := os.Stat(filename); err == nil && !replace {
+			if _, err := os.Stat(filename); err == nil && !overwrite {
 				log.Println("Already exists:", filename)
 				continue
 			}
-	
+
 			episode, err = bilibili.GetEpisode(s.EpisodeID)
 			if err != nil {
 				log.Println(err)
 			}
-	
+
 			if listSubs {
-				log.Println("Available subtitles for:", s.TitleDisplay)
+				log.Println("Available subtitles language")
 				for _, s := range episode.Data.Subtitles {
 					log.Println(s.LangKey, s.Lang)
 				}
-				continue
+				break out
 			}
-	
+
 			sub, err = episode.GetSubtitleJSON(language)
 			if err != nil {
 				log.Fatalln(err)
 			}
-	
+
 			subSRT = bilibili.SubToSRT(*sub)
 			err := utils.CreateSubFile(filename, subSRT)
 			if err != nil {
@@ -99,5 +102,7 @@ func Run(id string) {
 			log.Println("Writing subtitle to:", filename)
 		}
 	}
-	log.Println("Finished Downloading:", info.Data.Season.Title)
+	if !listSubs {
+		log.Println("Finished Downloading:", info.Data.Season.Title)
+	}
 }
