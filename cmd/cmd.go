@@ -54,7 +54,7 @@ func Run(id string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("Total Episode:", len(epList.Data.Sections[0].Episodes))
+	log.Println("Total Episodes:", len(epList.Data.Sections[0].Episodes))
 
 	title = utils.CleanText(info.Data.Season.Title)
 	err = os.MkdirAll(title, os.ModePerm)
