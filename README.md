@@ -22,6 +22,6 @@ Flags:
   -h, --help              help for bilisubdl
   -l, --language string   Subtitle language to download (e.g. en)
       --list-subs         List available subtitles language
-  -r, --replace           Replace existing subtitles
+  -w, --overwrite         Force overwrite downloaded subtitles
   -v, --version           version for bilisubdl
 ```
