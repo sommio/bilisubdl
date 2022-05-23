@@ -19,7 +19,7 @@ var (
 
 var RootCmd = &cobra.Command{
 	Use:     "bilisubdl",
-	Version: "1.1.1",
+	Version: "1.1.0",
 	Run: func(cmd *cobra.Command, args []string) {
 		if language == "" && !listSubs {
 			log.Fatalln("No input language")
@@ -32,7 +32,7 @@ var RootCmd = &cobra.Command{
 
 func init() {
 	rootFlags := RootCmd.PersistentFlags()
-	rootFlags.StringVarP(&language, "lang", "l", "", "Subtitle langague to download (e.g. en)")
+	rootFlags.StringVarP(&language, "language", "l", "", "Subtitle language to download (e.g. en)")
 	rootFlags.BoolVar(&listSubs, "list-subs", false, "List available subtitles language")
 	rootFlags.BoolVarP(&replace, "replace", "r", false, "Replace existing subtitles")
 }
@@ -55,46 +55,49 @@ func Run(id string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("Total Episodes:", len(epList.Data.Sections[0].Episodes))
-
+	
 	title = utils.CleanText(info.Data.Season.Title)
-	err = os.MkdirAll(title, os.ModePerm)
-	if err != nil {
-		log.Fatalln(err)
+	if !listSubs {
+		err = os.MkdirAll(title, os.ModePerm)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 
-	for _, s := range epList.Data.Sections[0].Episodes {
-		filename = filepath.Join(title, fmt.Sprintf("%s.%s.srt", utils.CleanText(s.TitleDisplay), language))
-		if _, err := os.Stat(filename); err == nil && !replace {
-			log.Println("Already exists:", filename)
-			continue
-		}
-
-		episode, err = bilibili.GetEpisode(s.EpisodeID)
-		if err != nil {
-			log.Println(err)
-		}
-
-		if listSubs {
-			log.Println("Available subtitles for:", s.TitleDisplay)
-			for _, s := range episode.Data.Subtitles {
-				log.Println(s.LangKey, s.Lang)
+	for _, j := range epList.Data.Sections {
+		log.Println("Episode List:", j.EpListTitle)
+		for _, s := range j.Episodes {
+			filename = filepath.Join(title, fmt.Sprintf("%s.%s.srt", utils.CleanText(s.TitleDisplay), language))
+			if _, err := os.Stat(filename); err == nil && !replace {
+				log.Println("Already exists:", filename)
+				continue
 			}
-			continue
+	
+			episode, err = bilibili.GetEpisode(s.EpisodeID)
+			if err != nil {
+				log.Println(err)
+			}
+	
+			if listSubs {
+				log.Println("Available subtitles for:", s.TitleDisplay)
+				for _, s := range episode.Data.Subtitles {
+					log.Println(s.LangKey, s.Lang)
+				}
+				continue
+			}
+	
+			sub, err = episode.GetSubtitleJSON(language)
+			if err != nil {
+				log.Fatalln(err)
+			}
+	
+			subSRT = bilibili.SubToSRT(*sub)
+			err := utils.CreateSubFile(filename, subSRT)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			log.Println("Writing subtitle to:", filename)
 		}
-
-
-		sub, err = episode.GetSubtitleJSON(language)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		subSRT = bilibili.SubToSRT(*sub)
-		err := utils.CreateSubFile(filename, subSRT)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		log.Println("Writing subtitle to:", filename)
 	}
 	log.Println("Finished Downloading:", info.Data.Season.Title)
 }
