@@ -19,7 +19,7 @@ var (
 
 var RootCmd = &cobra.Command{
 	Use:     "bilisubdl",
-	Version: "1.1.0",
+	Version: "1.1.1",
 	Run: func(cmd *cobra.Command, args []string) {
 		if language == "" && !listSubs {
 			log.Fatalln("No input language")
@@ -64,6 +64,12 @@ func Run(id string) {
 	}
 
 	for _, s := range epList.Data.Sections[0].Episodes {
+		filename = filepath.Join(title, fmt.Sprintf("%s.%s.srt", utils.CleanText(s.TitleDisplay), language))
+		if _, err := os.Stat(filename); err == nil && !replace {
+			log.Println("Already exists:", filename)
+			continue
+		}
+
 		episode, err = bilibili.GetEpisode(s.EpisodeID)
 		if err != nil {
 			log.Println(err)
@@ -77,11 +83,6 @@ func Run(id string) {
 			continue
 		}
 
-		filename = filepath.Join(title, fmt.Sprintf("%s.%s.srt", utils.CleanText(s.TitleDisplay), language))
-		if _, err := os.Stat(filename); err == nil && !replace {
-			log.Println("Already exists:", filename)
-			continue
-		}
 
 		sub, err = episode.GetSubtitleJSON(language)
 		if err != nil {
