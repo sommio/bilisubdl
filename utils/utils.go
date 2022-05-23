@@ -2,18 +2,23 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
-	"os"
 )
 
 func GetJson(t interface{}, url string) error {
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return errors.New(fmt.Sprintf("HTTP error code %d", resp.StatusCode))
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -55,9 +60,9 @@ func CreateSubFile(filename, content string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	defer f.Close()
-	
+
 	_, err = f.WriteString(content)
 	if err != nil {
 		return err
