@@ -18,7 +18,7 @@ var (
 
 var RootCmd = &cobra.Command{
 	Use:     "bilisubdl",
-	Version: "1.0.0",
+	Version: "1.0.1",
 	Run: func(cmd *cobra.Command, args []string) {
 		if language == "" && !listSubs {
 			log.Fatalln("No input language")
