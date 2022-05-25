@@ -49,7 +49,7 @@ func SecondToTime(tt float64) string {
 func CleanText(t string) string {
 	toBeReplaces := []string{"\"", "?", "/", ":", "\\", "*", "<", ">", "|"}
 	for _, elem := range toBeReplaces {
-		t = strings.ReplaceAll(t, elem, "")
+		t = strings.ReplaceAll(t, elem, "_")
 	}
 
 	return strings.TrimSpace(strings.Trim(t, "."))
