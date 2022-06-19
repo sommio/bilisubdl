@@ -76,7 +76,7 @@ func Run(id string) {
 				continue
 			}
 
-			episode, err = bilibili.GetEpisode(s.EpisodeID)
+			episode, err = bilibili.GetEpisode(s.EpisodeID.String())
 			if err != nil {
 				log.Println(err)
 			}

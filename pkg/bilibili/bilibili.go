@@ -47,9 +47,9 @@ func GetEpisodeList(id string) (*Episodes, error) {
 	return epList, nil
 }
 
-func GetEpisode(id int) (*Episode, error) {
+func GetEpisode(id string) (*Episode, error) {
 	var ep = new(Episode)
-	url := fmt.Sprintf("%s%d", BASE_EPISODE_URL, id)
+	url := fmt.Sprintf("%s%s", BASE_EPISODE_URL, id)
 	if err := utils.GetJson(ep, url); err != nil {
 		return nil, err
 	}
