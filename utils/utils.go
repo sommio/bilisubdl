@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 )
 
 func GetJson(t interface{}, url string) error {
@@ -35,15 +34,10 @@ func GetJson(t interface{}, url string) error {
 }
 
 func SecondToTime(tt float64) string {
-	t := time.Duration(tt*1000) * time.Millisecond
-	h := t / time.Hour
-	t -= h * time.Hour
-	m := t / time.Minute
-	t -= m * time.Minute
-	s := t / time.Second
-	t -= s * time.Second
-	ms := t / time.Millisecond
-	return fmt.Sprintf("%02d:%02d:%02d,%03d", h, m, s, ms)
+	secs, msec := int64(tt), int64(tt*1000)%1000
+	mins, secs := secs/60, secs%60
+	hrs, mins := mins/60, mins%60
+	return fmt.Sprintf("%02d:%02d:%02d,%03d", hrs, mins, secs, msec)
 }
 
 func CleanText(t string) string {
