@@ -5,3 +5,4 @@ makefile
 *.exe
 *.yaml
 dist
+.vscode
