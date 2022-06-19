@@ -30,6 +30,11 @@ func GetInfo(id string) (*Info, error) {
 	if err := utils.GetJson(info, url); err != nil {
 		return nil, err
 	}
+
+	if info.Data.Season.Title == "" {
+		return nil, errors.New("Title not found")
+	}
+
 	return info, nil
 }
 
@@ -73,8 +78,9 @@ func SubToSRT(json Subtitle) string {
 	var sub string
 	var content string
 	for i, s := range json.Body {
-		content = s.Content
-		if s.Location != 2 {
+		if s.Location == 2 {
+			content = s.Content
+		} else {
 			content = fmt.Sprintf("{\\an%d}%s", s.Location, content)
 		}
 		sub += fmt.Sprintf("%d\n%s --> %s\n%s\n\n", i+1, utils.SecondToTime(s.From), utils.SecondToTime(s.To), content)
