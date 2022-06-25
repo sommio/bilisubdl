@@ -45,6 +45,7 @@ func CleanText(t string) string {
 	for _, elem := range toBeReplaces {
 		t = strings.ReplaceAll(t, elem, "_")
 	}
+	t = strings.ReplaceAll(t, "\n", " ")
 
 	return strings.TrimSpace(strings.Trim(t, "."))
 }
