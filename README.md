@@ -1,5 +1,7 @@
 # bilisubdl
 
+[Powershell version](https://github.com/K0ng2/bilisubdl-pwsh)
+
 ## Examples
 
 ```bash
