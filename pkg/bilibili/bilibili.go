@@ -10,19 +10,19 @@ import (
 // api url examples
 /*
 title
-https://api.bilibili.tv/intl/gateway/web/v2/ogv/play/season_info?season_id=1049041&platform=web
+https://api.bilibili.tv/intl/gateway/web/v2/ogv/play/season_info?season_id=1049041
 
 episode list
-https://api.bilibili.tv/intl/gateway/web/v2/ogv/play/episodes?season_id=1049041&platform=web
+https://api.bilibili.tv/intl/gateway/web/v2/ogv/play/episodes?season_id=1049041
 
 episode
-https://api.bilibili.tv/intl/gateway/web/v2/subtitle?&episode_id=368729
+https://api.bilibili.tv/intl/gateway/web/v2/subtitle?s_locale&episode_id=368729
 */
 
 const _API_URL string = "https://api.bilibili.tv/intl/gateway/web/v2"
-const BASE_INFO_URL string = _API_URL + "/ogv/play/season_info?season_id=%s&platform=web"
-const BASE_EPISODE_LIST_URL string = _API_URL + "/ogv/play/episodes?season_id=%s&platform=web"
-const BASE_EPISODE_URL string = _API_URL + "/subtitle?&episode_id="
+const BASE_INFO_URL string = _API_URL + "/ogv/play/season_info?season_id=%s"
+const BASE_EPISODE_LIST_URL string = _API_URL + "/ogv/play/episodes?season_id=%s"
+const BASE_EPISODE_URL string = _API_URL + "/subtitle?s_locale&episode_id="
 
 func GetInfo(id string) (*Info, error) {
 	var info = new(Info)
