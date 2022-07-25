@@ -18,7 +18,7 @@ var (
 )
 
 var RootCmd = &cobra.Command{
-	Use:     "bilisubdl",
+	Use:     "bilisubdl [id] [flags]",
 	Run: func(cmd *cobra.Command, args []string) {
 		if language == "" && !listSubs {
 			log.Fatalln("No input language")
@@ -70,7 +70,11 @@ func Run(id string) {
 			log.Println("Episode List:", j.EpListTitle)
 		}
 		for _, s := range j.Episodes {
-			filename = filepath.Join(title, fmt.Sprintf("%s.%s.srt", utils.CleanText(s.TitleDisplay), language))
+			name := s.ShortTitleDisplay
+			if s.TitleDisplay != "" {
+				name = fmt.Sprintf("%s - %s", s.ShortTitleDisplay, utils.CleanText(s.TitleDisplay))
+			}
+			filename = filepath.Join(title, fmt.Sprintf("%s.%s.srt", name, language))
 			if _, err := os.Stat(filename); err == nil && !overwrite {
 				log.Println("Already exists:", filename)
 				continue

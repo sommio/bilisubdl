@@ -15,8 +15,9 @@ type Episodes struct {
 		Sections []struct {
 			EpListTitle string `json:"ep_list_title"`
 			Episodes    []struct {
-				EpisodeID    json.Number `json:"episode_id"`
-				TitleDisplay string      `json:"title_display"`
+				ShortTitleDisplay string      `json:"short_title_display"`
+				EpisodeID         json.Number `json:"episode_id"`
+				TitleDisplay      string      `json:"title_display"`
 			} `json:"episodes"`
 		} `json:"sections"`
 	} `json:"data"`

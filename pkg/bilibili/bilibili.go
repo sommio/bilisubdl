@@ -20,13 +20,12 @@ https://api.bilibili.tv/intl/gateway/web/v2/subtitle?s_locale&episode_id=368729
 */
 
 const _API_URL string = "https://api.bilibili.tv/intl/gateway/web/v2"
-const BASE_INFO_URL string = _API_URL + "/ogv/play/season_info?season_id=%s"
-const BASE_EPISODE_LIST_URL string = _API_URL + "/ogv/play/episodes?season_id=%s"
-const BASE_EPISODE_URL string = _API_URL + "/subtitle?s_locale&episode_id="
+const _INFO_URL string = _API_URL + "/ogv/play/%s?season_id=%s"
+const _EPISODE_URL string = _API_URL + "/subtitle?s_locale&episode_id="
 
 func GetInfo(id string) (*Info, error) {
 	var info = new(Info)
-	url := fmt.Sprintf(BASE_INFO_URL, id)
+	url := fmt.Sprintf(_INFO_URL,"season_info", id)
 	if err := utils.GetJson(info, url); err != nil {
 		return nil, err
 	}
@@ -40,7 +39,7 @@ func GetInfo(id string) (*Info, error) {
 
 func GetEpisodeList(id string) (*Episodes, error) {
 	var epList = new(Episodes)
-	url := fmt.Sprintf(BASE_EPISODE_LIST_URL, id)
+	url := fmt.Sprintf(_INFO_URL,"episodes", id)
 	if err := utils.GetJson(epList, url); err != nil {
 		return nil, err
 	}
@@ -49,7 +48,7 @@ func GetEpisodeList(id string) (*Episodes, error) {
 
 func GetEpisode(id string) (*Episode, error) {
 	var ep = new(Episode)
-	url := fmt.Sprintf("%s%s", BASE_EPISODE_URL, id)
+	url := fmt.Sprintf("%s%s", _EPISODE_URL, id)
 	if err := utils.GetJson(ep, url); err != nil {
 		return nil, err
 	}

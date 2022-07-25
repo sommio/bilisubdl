@@ -6,3 +6,4 @@ makefile
 *.yaml
 dist
 .vscode
+*test*
