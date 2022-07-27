@@ -13,16 +13,14 @@ import (
 
 var (
 	language  string
+	output    string
 	listSubs  bool
 	overwrite bool
 )
 
 var RootCmd = &cobra.Command{
-	Use:     "bilisubdl [id] [flags]",
+	Use: "bilisubdl [id] [flags]",
 	Run: func(cmd *cobra.Command, args []string) {
-		if language == "" && !listSubs {
-			log.Fatalln("No input language")
-		}
 		for _, s := range args {
 			Run(s)
 		}
@@ -33,24 +31,21 @@ var RootCmd = &cobra.Command{
 func init() {
 	rootFlags := RootCmd.PersistentFlags()
 	rootFlags.StringVarP(&language, "language", "l", "", "Subtitle language to download (e.g. en)")
-	rootFlags.BoolVar(&listSubs, "list-subs", false, "List available subtitles language")
+	rootFlags.StringVarP(&output, "output", "o", "./", "Set output")
+	rootFlags.BoolVarP(&listSubs, "list-subs", "L", false, "List available subtitles language")
 	rootFlags.BoolVarP(&overwrite, "overwrite", "w", false, "Force overwrite downloaded subtitles")
 }
 
 func Run(id string) {
 	var (
-		title,
-		subSRT,
-		filename string
-		episode *bilibili.Episode
-		sub     *bilibili.Subtitle
+		title, filename, sub string
+		episode              *bilibili.Episode
 	)
 	info, err := bilibili.GetInfo(id)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	log.Println("Title:", info.Data.Season.Title)
 	epList, err := bilibili.GetEpisodeList(id)
 	if err != nil {
 		log.Fatalln(err)
@@ -64,19 +59,18 @@ func Run(id string) {
 		}
 	}
 
-	out:
 	for _, j := range epList.Data.Sections {
-		if !listSubs {
-			log.Println("Episode List:", j.EpListTitle)
-		}
+		// if !listSubs {
+		// 	log.Println("Episode List:", j.EpListTitle)
+		// }
 		for _, s := range j.Episodes {
-			name := s.ShortTitleDisplay
-			if s.TitleDisplay != "" {
-				name = fmt.Sprintf("%s - %s", s.ShortTitleDisplay, utils.CleanText(s.TitleDisplay))
-			}
-			filename = filepath.Join(title, fmt.Sprintf("%s.%s.srt", name, language))
+			// name := s.ShortTitleDisplay
+			// if s.TitleDisplay != "" {
+			// 	name = fmt.Sprintf("%s - %s", s.ShortTitleDisplay, utils.CleanText(s.TitleDisplay))
+			// }
+			filename = filepath.Join(output, title, fmt.Sprintf("%s.%s.srt", s.TitleDisplay, language))
 			if _, err := os.Stat(filename); err == nil && !overwrite {
-				log.Println("Already exists:", filename)
+				log.Println("#", filename)
 				continue
 			}
 
@@ -90,23 +84,19 @@ func Run(id string) {
 				for _, s := range episode.Data.Subtitles {
 					log.Println(s.LangKey, s.Lang)
 				}
-				break out
+				return
 			}
 
-			sub, err = episode.GetSubtitleJSON(language)
+			sub, err = episode.GetSubtitle(language)
 			if err != nil {
 				log.Fatalln(err)
 			}
 
-			subSRT = bilibili.SubToSRT(*sub)
-			err := utils.CreateSubFile(filename, subSRT)
+			err := utils.WriteFile(filename, sub)
 			if err != nil {
 				log.Fatalln(err)
 			}
-			log.Println("Writing subtitle to:", filename)
+			log.Println("*", filename)
 		}
-	}
-	if !listSubs {
-		log.Println("Finished Downloading:", info.Data.Season.Title)
 	}
 }

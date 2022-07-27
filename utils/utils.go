@@ -50,7 +50,7 @@ func CleanText(t string) string {
 	return strings.TrimSpace(strings.Trim(t, "."))
 }
 
-func CreateSubFile(filename, content string) error {
+func WriteFile(filename, content string) error {
 	f, err := os.Create(filename)
 	if err != nil {
 		return err

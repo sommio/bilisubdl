@@ -25,23 +25,28 @@ const _EPISODE_URL string = _API_URL + "/subtitle?s_locale&episode_id="
 
 func GetInfo(id string) (*Info, error) {
 	var info = new(Info)
-	url := fmt.Sprintf(_INFO_URL,"season_info", id)
+	url := fmt.Sprintf(_INFO_URL, "season_info", id)
 	if err := utils.GetJson(info, url); err != nil {
 		return nil, err
 	}
-
-	if info.Data.Season.Title == "" {
-		return nil, errors.New("Title not found")
+	if info.Code != 0 {
+		return nil, errors.New(fmt.Sprintf("Api response code %d: %s", info.Code, info.Message))
 	}
+	// if info.Data.Season.Title == "" {
+	// 	return nil, errors.New("Title not found")
+	// }
 
 	return info, nil
 }
 
 func GetEpisodeList(id string) (*Episodes, error) {
 	var epList = new(Episodes)
-	url := fmt.Sprintf(_INFO_URL,"episodes", id)
+	url := fmt.Sprintf(_INFO_URL, "episodes", id)
 	if err := utils.GetJson(epList, url); err != nil {
 		return nil, err
+	}
+	if epList.Code != 0 {
+		return nil, errors.New(fmt.Sprintf("Api response code %d: %s", epList.Code, epList.Message))
 	}
 	return epList, nil
 }
@@ -52,28 +57,35 @@ func GetEpisode(id string) (*Episode, error) {
 	if err := utils.GetJson(ep, url); err != nil {
 		return nil, err
 	}
+	if ep.Code != 0 {
+		return nil, errors.New(fmt.Sprintf("Api response code %d: %s", ep.Code, ep.Message))
+	}
 	return ep, nil
 }
 
-func (s *Episode) GetSubtitleJSON(language string) (*Subtitle, error) {
+func (s *Episode) GetSubtitle(language string) (string, error) {
 	var url string
 	var subJson = new(Subtitle)
 	for _, s := range s.Data.Subtitles {
 		if s.LangKey == language {
 			url = s.URL
+			break
 		}
 	}
 	if url == "" {
-		return nil, errors.New(fmt.Sprintf("Language \"%s\" not found", language))
+		return "", errors.New(fmt.Sprintf("Language \"%s\" not found", language))
 	}
 	err := utils.GetJson(subJson, url)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return subJson, nil
+	if subJson.Code != 0 {
+		return "", errors.New(fmt.Sprintf("Api response code %d: %s", subJson.Code, subJson.Message))
+	}
+	return SubToSRT(subJson), nil
 }
 
-func SubToSRT(json Subtitle) string {
+func SubToSRT(json *Subtitle) string {
 	var sub string
 	var content string
 	for i, s := range json.Body {
