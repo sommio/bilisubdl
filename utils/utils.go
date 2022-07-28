@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func GetJson(t interface{}, url string) error {
+func ReqJson(t interface{}, url string) error {
 	resp, err := http.Get(url)
 	if err != nil {
 		return err

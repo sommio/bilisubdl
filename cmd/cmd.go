@@ -41,12 +41,12 @@ func Run(id string) {
 		title, filename, sub string
 		episode              *bilibili.Episode
 	)
-	info, err := bilibili.GetInfo(id)
+	info, err := bilibili.Info(id)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	epList, err := bilibili.GetEpisodeList(id)
+	epList, err := bilibili.Episodes(id)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -60,9 +60,6 @@ func Run(id string) {
 	}
 
 	for _, j := range epList.Data.Sections {
-		// if !listSubs {
-		// 	log.Println("Episode List:", j.EpListTitle)
-		// }
 		for _, s := range j.Episodes {
 			// name := s.ShortTitleDisplay
 			// if s.TitleDisplay != "" {
@@ -74,7 +71,7 @@ func Run(id string) {
 				continue
 			}
 
-			episode, err = bilibili.GetEpisode(s.EpisodeID.String())
+			episode, err = bilibili.Episode(s.EpisodeID.String())
 			if err != nil {
 				log.Println(err)
 			}
@@ -87,7 +84,7 @@ func Run(id string) {
 				return
 			}
 
-			sub, err = episode.GetSubtitle(language)
+			sub, err = episode.Subtitle(language)
 			if err != nil {
 				log.Fatalln(err)
 			}
