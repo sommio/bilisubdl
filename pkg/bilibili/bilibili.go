@@ -19,30 +19,27 @@ episode
 https://api.bilibili.tv/intl/gateway/web/v2/subtitle?s_locale&episode_id=368729
 */
 
-const _API_URL string = "https://api.bilibili.tv/intl/gateway/web/v2"
-const _INFO_URL string = _API_URL + "/ogv/play/%s?season_id=%s"
-const _EPISODE_URL string = _API_URL + "/subtitle?s_locale&episode_id="
+const bilibiliAPI string = "https://api.bilibili.tv/intl/gateway"
+const bilibiliInfoAPI string = bilibiliAPI + "/web/v2/ogv/play/%s?season_id=%s"
+// const bilibiliEpisodeAPI string = bilibiliAPI + "/subtitle?s_locale&episode_id="
+const bilibiliEpisodeAPI string = bilibiliAPI + "/m/subtitle?ep_id="
 
-func GetInfo(id string) (*Info, error) {
+func Info(id string) (*Info, error) {
 	var info = new(Info)
-	url := fmt.Sprintf(_INFO_URL, "season_info", id)
-	if err := utils.GetJson(info, url); err != nil {
+	url := fmt.Sprintf(bilibiliInfoAPI, "season_info", id)
+	if err := utils.ReqJson(info, url); err != nil {
 		return nil, err
 	}
 	if info.Code != 0 {
 		return nil, errors.New(fmt.Sprintf("Api response code %d: %s", info.Code, info.Message))
 	}
-	// if info.Data.Season.Title == "" {
-	// 	return nil, errors.New("Title not found")
-	// }
-
 	return info, nil
 }
 
-func GetEpisodeList(id string) (*Episodes, error) {
+func Episodes(id string) (*Episodes, error) {
 	var epList = new(Episodes)
-	url := fmt.Sprintf(_INFO_URL, "episodes", id)
-	if err := utils.GetJson(epList, url); err != nil {
+	url := fmt.Sprintf(bilibiliInfoAPI, "episodes", id)
+	if err := utils.ReqJson(epList, url); err != nil {
 		return nil, err
 	}
 	if epList.Code != 0 {
@@ -51,10 +48,10 @@ func GetEpisodeList(id string) (*Episodes, error) {
 	return epList, nil
 }
 
-func GetEpisode(id string) (*Episode, error) {
+func Episode(id string) (*Episode, error) {
 	var ep = new(Episode)
-	url := fmt.Sprintf("%s%s", _EPISODE_URL, id)
-	if err := utils.GetJson(ep, url); err != nil {
+	url := bilibiliEpisodeAPI + id
+	if err := utils.ReqJson(ep, url); err != nil {
 		return nil, err
 	}
 	if ep.Code != 0 {
@@ -63,38 +60,54 @@ func GetEpisode(id string) (*Episode, error) {
 	return ep, nil
 }
 
-func (s *Episode) GetSubtitle(language string) (string, error) {
-	var url string
+func (s *Episode) Subtitle(language string) (string, error) {
+	var index int
 	var subJson = new(Subtitle)
-	for _, s := range s.Data.Subtitles {
-		if s.LangKey == language {
-			url = s.URL
+	for i, s := range s.Data.Subtitles {
+		if s.Key == lang {
+			index = i
 			break
 		}
 	}
-	if url == "" {
+	if index == 0 {
 		return "", errors.New(fmt.Sprintf("Language \"%s\" not found", language))
 	}
-	err := utils.GetJson(subJson, url)
+	if s.Data.Subtitles[index].IsMachine {
+		log.Println("Warning machine translation")
+	}
+	err := utils.ReqJson(subJson, s.Data.Subtitles[index].URL)
 	if err != nil {
 		return "", err
 	}
-	if subJson.Code != 0 {
-		return "", errors.New(fmt.Sprintf("Api response code %d: %s", subJson.Code, subJson.Message))
-	}
-	return SubToSRT(subJson), nil
+	return jsonToSRT(subJson), nil
 }
 
-func SubToSRT(json *Subtitle) string {
+// func SubToSRT(json *Subtitle) string {
+// 	var sub string
+// 	var content string
+// 	for i, s := range json.Body {
+// 		if s.Location == 2 {
+// 			content = s.Content
+// 		} else {
+// 			content = fmt.Sprintf("{\\an%d}%s", s.Location, content)
+// 		}
+// 		sub += fmt.Sprintf("%d\n%s --> %s\n%s\n\n", i+1, utils.SecondToTime(s.From), utils.SecondToTime(s.To), content)
+// 	}
+// 	return sub
+// }
+
+func jsonToSRT(json BilibiliSubtitle) string {
 	var sub string
 	var content string
 	for i, s := range json.Body {
-		if s.Location == 2 {
-			content = s.Content
-		} else {
+		if i != 0 || i == len(json.Body) {
+			sub += "\n\n"
+		}
+		content = s.Content
+		if s.Location != 2 {
 			content = fmt.Sprintf("{\\an%d}%s", s.Location, content)
 		}
-		sub += fmt.Sprintf("%d\n%s --> %s\n%s\n\n", i+1, utils.SecondToTime(s.From), utils.SecondToTime(s.To), content)
+		sub += fmt.Sprintf("%d\n%s --> %s\n%s", i+1, utils.SecondToTime(s.From), utils.SecondToTime(s.To), content)
 	}
 	return sub
 }

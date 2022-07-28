@@ -32,16 +32,17 @@ type Episode struct {
 	Message string `json:"message"`
 	Data    struct {
 		Subtitles []struct {
-			URL     string `json:"url"`
-			Lang    string `json:"lang"`
-			LangKey string `json:"lang_key"`
+			URL     	string `json:"url"`
+			// Lang    string `json:"lang"`
+			Title     string `json:"title"`
+			// LangKey string `json:"lang_key"`
+			Key       string `json:"key"`
+			IsMachine bool   `json:"is_machine"`
 		} `json:"subtitles"`
 	} `json:"data"`
 }
 
 type Subtitle struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
 	Body    []struct {
 		From     float64 `json:"from"`
 		To       float64 `json:"to"`
