@@ -3,6 +3,7 @@ package bilibili
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/K0ng2/bilisubdl/utils"
 )
@@ -24,8 +25,8 @@ const bilibiliInfoAPI string = bilibiliAPI + "/web/v2/ogv/play/%s?season_id=%s"
 // const bilibiliEpisodeAPI string = bilibiliAPI + "/subtitle?s_locale&episode_id="
 const bilibiliEpisodeAPI string = bilibiliAPI + "/m/subtitle?ep_id="
 
-func Info(id string) (*Info, error) {
-	var info = new(Info)
+func Info(id string) (*BilibiliInfo, error) {
+	var info = new(BilibiliInfo)
 	url := fmt.Sprintf(bilibiliInfoAPI, "season_info", id)
 	if err := utils.ReqJson(info, url); err != nil {
 		return nil, err
@@ -36,8 +37,8 @@ func Info(id string) (*Info, error) {
 	return info, nil
 }
 
-func Episodes(id string) (*Episodes, error) {
-	var epList = new(Episodes)
+func Episodes(id string) (*BilibiliEpisodes, error) {
+	var epList = new(BilibiliEpisodes)
 	url := fmt.Sprintf(bilibiliInfoAPI, "episodes", id)
 	if err := utils.ReqJson(epList, url); err != nil {
 		return nil, err
@@ -48,8 +49,8 @@ func Episodes(id string) (*Episodes, error) {
 	return epList, nil
 }
 
-func Episode(id string) (*Episode, error) {
-	var ep = new(Episode)
+func Episode(id string) (*BilibiliEpisode, error) {
+	var ep = new(BilibiliEpisode)
 	url := bilibiliEpisodeAPI + id
 	if err := utils.ReqJson(ep, url); err != nil {
 		return nil, err
@@ -60,11 +61,11 @@ func Episode(id string) (*Episode, error) {
 	return ep, nil
 }
 
-func (s *Episode) Subtitle(language string) (string, error) {
+func (s *BilibiliEpisode) Subtitle(language string) (string, error) {
 	var index int
-	var subJson = new(Subtitle)
+	var subJson = new(BilibiliSubtitle)
 	for i, s := range s.Data.Subtitles {
-		if s.Key == lang {
+		if s.Key == language {
 			index = i
 			break
 		}
@@ -96,7 +97,7 @@ func (s *Episode) Subtitle(language string) (string, error) {
 // 	return sub
 // }
 
-func jsonToSRT(json BilibiliSubtitle) string {
+func jsonToSRT(json *BilibiliSubtitle) string {
 	var sub string
 	var content string
 	for i, s := range json.Body {

@@ -2,7 +2,7 @@ package bilibili
 
 import "encoding/json"
 
-type Info struct {
+type BilibiliInfo struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Data    struct {
@@ -12,7 +12,7 @@ type Info struct {
 	} `json:"data"`
 }
 
-type Episodes struct {
+type BilibiliEpisodes struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Data    struct {
@@ -27,7 +27,7 @@ type Episodes struct {
 	} `json:"data"`
 }
 
-type Episode struct {
+type BilibiliEpisode struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Data    struct {
@@ -42,7 +42,7 @@ type Episode struct {
 	} `json:"data"`
 }
 
-type Subtitle struct {
+type BilibiliSubtitle struct {
 	Body    []struct {
 		From     float64 `json:"from"`
 		To       float64 `json:"to"`

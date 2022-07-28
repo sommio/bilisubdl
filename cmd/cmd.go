@@ -39,7 +39,7 @@ func init() {
 func Run(id string) {
 	var (
 		title, filename, sub string
-		episode              *bilibili.Episode
+		episode              *bilibili.BilibiliEpisode
 	)
 	info, err := bilibili.Info(id)
 	if err != nil {
@@ -79,7 +79,7 @@ func Run(id string) {
 			if listSubs {
 				log.Println("Available subtitles language")
 				for _, s := range episode.Data.Subtitles {
-					log.Println(s.LangKey, s.Lang)
+					log.Println(s.Key, s.Title)
 				}
 				return
 			}
