@@ -65,7 +65,7 @@ func Run(id string) {
 			// if s.TitleDisplay != "" {
 			// 	name = fmt.Sprintf("%s - %s", s.ShortTitleDisplay, utils.CleanText(s.TitleDisplay))
 			// }
-			filename = filepath.Join(output, title, fmt.Sprintf("%s.%s.srt", s.TitleDisplay, language))
+			filename = filepath.Join(output, title, fmt.Sprintf("%s.%s.srt", utils.CleanText(s.TitleDisplay), language))
 			if _, err := os.Stat(filename); err == nil && !overwrite {
 				log.Println("#", filename)
 				continue
