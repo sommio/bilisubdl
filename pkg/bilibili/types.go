@@ -32,9 +32,9 @@ type BilibiliEpisode struct {
 	Message string `json:"message"`
 	Data    struct {
 		Subtitles []struct {
-			URL     	string `json:"url"`
+			URL string `json:"url"`
 			// Lang    string `json:"lang"`
-			Title     string `json:"title"`
+			Title string `json:"title"`
 			// LangKey string `json:"lang_key"`
 			Key       string `json:"key"`
 			IsMachine bool   `json:"is_machine"`
@@ -43,7 +43,7 @@ type BilibiliEpisode struct {
 }
 
 type BilibiliSubtitle struct {
-	Body    []struct {
+	Body []struct {
 		From     float64 `json:"from"`
 		To       float64 `json:"to"`
 		Location int     `json:"location"`

@@ -22,6 +22,7 @@ https://api.bilibili.tv/intl/gateway/web/v2/subtitle?s_locale&episode_id=368729
 
 const bilibiliAPI string = "https://api.bilibili.tv/intl/gateway"
 const bilibiliInfoAPI string = bilibiliAPI + "/web/v2/ogv/play/%s?season_id=%s"
+
 // const bilibiliEpisodeAPI string = bilibiliAPI + "/subtitle?s_locale&episode_id="
 const bilibiliEpisodeAPI string = bilibiliAPI + "/m/subtitle?ep_id="
 
