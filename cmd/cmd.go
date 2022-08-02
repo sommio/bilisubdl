@@ -38,8 +38,10 @@ func init() {
 
 func Run(id string) {
 	var (
-		title, filename, sub string
-		episode              *bilibili.BilibiliEpisode
+		title, filename, fileType string
+		episode                   *bilibili.BilibiliEpisode
+		sub                       []byte
+		exist                     bool
 	)
 	info, err := bilibili.Info(id)
 	if err != nil {
@@ -61,13 +63,17 @@ func Run(id string) {
 
 	for _, j := range epList.Data.Sections {
 		for _, s := range j.Episodes {
-			// name := s.ShortTitleDisplay
-			// if s.TitleDisplay != "" {
-			// 	name = fmt.Sprintf("%s - %s", s.ShortTitleDisplay, utils.CleanText(s.TitleDisplay))
-			// }
-			filename = filepath.Join(output, title, fmt.Sprintf("%s.%s.srt", utils.CleanText(s.TitleDisplay), language))
-			if _, err := os.Stat(filename); err == nil && !overwrite {
-				log.Println("#", filename)
+			filename = filepath.Join(output, title, fmt.Sprintf("%s.%s", utils.CleanText(s.TitleDisplay), language))
+			for _, s := range []string{".srt", ".ass"} {
+				if _, err := os.Stat(filename + s); err == nil && !overwrite {
+					log.Println("#", filename+s)
+					exist = true
+					continue
+				}
+			}
+
+			if exist {
+				exist = false
 				continue
 			}
 
@@ -84,16 +90,16 @@ func Run(id string) {
 				return
 			}
 
-			sub, err = episode.Subtitle(language)
+			sub, fileType, err = episode.Subtitle(language)
 			if err != nil {
 				log.Fatalln(err)
 			}
 
-			err := utils.WriteFile(filename, sub)
+			err := utils.WriteFile(filename+fileType, sub)
 			if err != nil {
 				log.Fatalln(err)
 			}
-			log.Println("*", filename)
+			log.Println("*", filename+fileType)
 		}
 	}
 }

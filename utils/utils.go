@@ -10,16 +10,26 @@ import (
 	"strings"
 )
 
-func ReqJson(t interface{}, url string) error {
+var client http.Client
+
+type Response struct {
+	*http.Response
+}
+
+func Request(url string) (*Response, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if resp.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("HTTP error code %d", resp.StatusCode))
+		return nil, errors.New(fmt.Sprintf("HTTP error code %d", resp.StatusCode))
 	}
 
+	return &Response{resp}, nil
+}
+
+func (resp *Response) Json(t interface{}) error {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -50,15 +60,14 @@ func CleanText(t string) string {
 	return strings.TrimSpace(strings.Trim(t, "."))
 }
 
-func WriteFile(filename, content string) error {
+func WriteFile(filename string, content []byte) error {
 	f, err := os.Create(filename)
+	defer f.Close()
 	if err != nil {
 		return err
 	}
 
-	defer f.Close()
-
-	_, err = f.WriteString(content)
+	_, err = f.Write(content)
 	if err != nil {
 		return err
 	}

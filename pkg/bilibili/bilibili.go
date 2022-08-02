@@ -3,7 +3,9 @@ package bilibili
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"path/filepath"
 
 	"github.com/K0ng2/bilisubdl/utils"
 )
@@ -29,7 +31,11 @@ const bilibiliEpisodeAPI string = bilibiliAPI + "/m/subtitle?ep_id="
 func Info(id string) (*BilibiliInfo, error) {
 	var info = new(BilibiliInfo)
 	url := fmt.Sprintf(bilibiliInfoAPI, "season_info", id)
-	if err := utils.ReqJson(info, url); err != nil {
+	resp, err := utils.Request(url)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Json(info); err != nil {
 		return nil, err
 	}
 	if info.Code != 0 {
@@ -41,7 +47,11 @@ func Info(id string) (*BilibiliInfo, error) {
 func Episodes(id string) (*BilibiliEpisodes, error) {
 	var epList = new(BilibiliEpisodes)
 	url := fmt.Sprintf(bilibiliInfoAPI, "episodes", id)
-	if err := utils.ReqJson(epList, url); err != nil {
+	resp, err := utils.Request(url)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Json(epList); err != nil {
 		return nil, err
 	}
 	if epList.Code != 0 {
@@ -53,7 +63,11 @@ func Episodes(id string) (*BilibiliEpisodes, error) {
 func Episode(id string) (*BilibiliEpisode, error) {
 	var ep = new(BilibiliEpisode)
 	url := bilibiliEpisodeAPI + id
-	if err := utils.ReqJson(ep, url); err != nil {
+	resp, err := utils.Request(url)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Json(ep); err != nil {
 		return nil, err
 	}
 	if ep.Code != 0 {
@@ -62,26 +76,45 @@ func Episode(id string) (*BilibiliEpisode, error) {
 	return ep, nil
 }
 
-func (s *BilibiliEpisode) Subtitle(language string) (string, error) {
-	var index int
-	var subJson = new(BilibiliSubtitle)
+func (s *BilibiliEpisode) Subtitle(language string) ([]byte, string, error) {
+	var index int = -1
 	for i, s := range s.Data.Subtitles {
 		if s.Key == language {
 			index = i
 			break
 		}
 	}
-	if index == 0 {
-		return "", errors.New(fmt.Sprintf("Language \"%s\" not found", language))
+	if index == -1 {
+		return nil, "", errors.New(fmt.Sprintf("Language \"%s\" not found", language))
 	}
 	if s.Data.Subtitles[index].IsMachine {
 		log.Println("Warning machine translation")
 	}
-	err := utils.ReqJson(subJson, s.Data.Subtitles[index].URL)
+	resp, err := utils.Request(s.Data.Subtitles[index].URL)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
-	return jsonToSRT(subJson), nil
+	defer resp.Body.Close()
+	fileType := filepath.Ext(resp.Request.URL.Path)
+	switch fileType {
+	case ".json":
+		var subJson = new(BilibiliSubtitle)
+		err := resp.Json(subJson)
+		if err != nil {
+			return nil, "", err
+		}
+		sub, err := jsonToSRT(subJson)
+		if err != nil {
+			return nil, "", err
+		}
+		return sub, ".srt", nil
+	default:
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, "", err
+		}
+		return body, fileType, nil
+	}
 }
 
 // func SubToSRT(json *Subtitle) string {
@@ -98,11 +131,11 @@ func (s *BilibiliEpisode) Subtitle(language string) (string, error) {
 // 	return sub
 // }
 
-func jsonToSRT(json *BilibiliSubtitle) string {
+func jsonToSRT(subJson *BilibiliSubtitle) ([]byte, error) {
 	var sub string
 	var content string
-	for i, s := range json.Body {
-		if i != 0 || i == len(json.Body) {
+	for i, s := range subJson.Body {
+		if i != 0 || i == len(subJson.Body) {
 			sub += "\n\n"
 		}
 		content = s.Content
@@ -111,5 +144,5 @@ func jsonToSRT(json *BilibiliSubtitle) string {
 		}
 		sub += fmt.Sprintf("%d\n%s --> %s\n%s", i+1, utils.SecondToTime(s.From), utils.SecondToTime(s.To), content)
 	}
-	return sub
+	return []byte(sub), nil
 }
