@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/K0ng2/bilisubdl/pkg/bilibili"
 	"github.com/K0ng2/bilisubdl/utils"
@@ -20,23 +21,28 @@ var (
 
 var RootCmd = &cobra.Command{
 	Use: "bilisubdl [id] [flags]",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		for _, s := range args {
-			Run(s)
+			err := Run(s)
+			if err != nil {
+				return err
+			}
 		}
+		return nil
 	},
 	Example: "bilisubdl 37738 1042594 -l th\nbilisubdl 37738 --list-subs",
+	SilenceErrors: true,
 }
 
 func init() {
 	rootFlags := RootCmd.PersistentFlags()
 	rootFlags.StringVarP(&language, "language", "l", "", "Subtitle language to download (e.g. en)")
 	rootFlags.StringVarP(&output, "output", "o", "./", "Set output")
-	rootFlags.BoolVarP(&listSubs, "list-subs", "L", false, "List available subtitles language")
+	rootFlags.BoolVarP(&listSubs, "list-subs", "L", false, "List available subtitle language")
 	rootFlags.BoolVarP(&overwrite, "overwrite", "w", false, "Force overwrite downloaded subtitles")
 }
 
-func Run(id string) {
+func Run(id string) error {
 	var (
 		title, filename, fileType string
 		episode                   *bilibili.BilibiliEpisode
@@ -45,28 +51,26 @@ func Run(id string) {
 	)
 	info, err := bilibili.Info(id)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
 	epList, err := bilibili.Episodes(id)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
-	if !listSubs {
-		title = utils.CleanText(info.Data.Season.Title)
-		err = os.MkdirAll(title, os.ModePerm)
-		if err != nil {
-			log.Fatalln(err)
-		}
+	title = utils.CleanText(info.Data.Season.Title)
+	err = os.MkdirAll(title, os.ModePerm)
+	if err != nil {
+		return err
 	}
 
 	for _, j := range epList.Data.Sections {
 		for _, s := range j.Episodes {
 			filename = filepath.Join(output, title, fmt.Sprintf("%s.%s", utils.CleanText(s.TitleDisplay), language))
-			for _, s := range []string{".srt", ".ass"} {
-				if _, err := os.Stat(filename + s); err == nil && !overwrite {
-					log.Println("#", filename+s)
+			for _, k := range []string{".srt", ".ass"} {
+				if _, err := os.Stat(filename + k); err == nil && !overwrite {
+					log.Println("#", filename+k)
 					exist = true
 					continue
 				}
@@ -83,23 +87,25 @@ func Run(id string) {
 			}
 
 			if listSubs {
-				log.Println("Available subtitles language")
+				fmt.Printf("%-10s Title\n", "Key")
+				fmt.Println(strings.Repeat("-", 20))
 				for _, s := range episode.Data.Subtitles {
-					log.Println(s.Key, s.Title)
+					fmt.Printf("%-10s %s\n", s.Key, s.Title)
 				}
-				return
+				return nil
 			}
 
 			sub, fileType, err = episode.Subtitle(language)
 			if err != nil {
-				log.Fatalln(err)
+				return err
 			}
 
-			err := utils.WriteFile(filename+fileType, sub)
+			err := utils.WriteFile(filename+fileType, sub, s.PublishTime)
 			if err != nil {
-				log.Fatalln(err)
+				return err
 			}
 			log.Println("*", filename+fileType)
 		}
 	}
+	return nil
 }

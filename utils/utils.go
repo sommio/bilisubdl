@@ -2,15 +2,13 @@ package utils
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
-
-var client http.Client
 
 type Response struct {
 	*http.Response
@@ -23,14 +21,14 @@ func Request(url string) (*Response, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		return nil, errors.New(fmt.Sprintf("HTTP error code %d", resp.StatusCode))
+		return nil, fmt.Errorf("http error code %d", resp.StatusCode)
 	}
 
 	return &Response{resp}, nil
 }
 
 func (resp *Response) Json(t interface{}) error {
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -57,17 +55,20 @@ func CleanText(t string) string {
 	}
 	t = strings.ReplaceAll(t, "\n", " ")
 
-	return strings.TrimSpace(strings.Trim(t, "."))
+	return strings.TrimSpace(strings.TrimRight(t, "."))
 }
 
-func WriteFile(filename string, content []byte) error {
+func WriteFile(filename string, content []byte, mTime time.Time) error {
 	f, err := os.Create(filename)
-	defer f.Close()
 	if err != nil {
 		return err
 	}
-
+	defer f.Close()
 	_, err = f.Write(content)
+	if err != nil {
+		return err
+	}
+	err = os.Chtimes(filename, mTime, mTime)
 	if err != nil {
 		return err
 	}
