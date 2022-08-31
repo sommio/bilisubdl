@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/K0ng2/bilisubdl/pkg/bilibili"
 	"github.com/K0ng2/bilisubdl/utils"
@@ -17,21 +17,24 @@ var (
 	output    string
 	listSubs  bool
 	overwrite bool
+	timeline  string
 )
 
 var RootCmd = &cobra.Command{
 	Use: "bilisubdl [id] [flags]",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
+		if timeline != "-" {
+			RunTimeline()
+			return
+		}
 		for _, s := range args {
 			err := Run(s)
 			if err != nil {
-				return err
+				panic(err)
 			}
 		}
-		return nil
 	},
-	Example: "bilisubdl 37738 1042594 -l th\nbilisubdl 37738 --list-subs",
-	SilenceErrors: true,
+	Example: "bilisubdl 37738 1042594 -l th\nbilisubdl 37738 --list-subs\nbilisubdl --timeline=sun",
 }
 
 func init() {
@@ -40,27 +43,29 @@ func init() {
 	rootFlags.StringVarP(&output, "output", "o", "./", "Set output")
 	rootFlags.BoolVarP(&listSubs, "list-subs", "L", false, "List available subtitle language")
 	rootFlags.BoolVarP(&overwrite, "overwrite", "w", false, "Force overwrite downloaded subtitles")
+	rootFlags.StringVar(&timeline, "timeline", "-", "show timeline (sun|mon|tue|wed|thu|fri|sat|)")
+	rootFlags.Lookup("timeline").NoOptDefVal = "today"
 }
 
 func Run(id string) error {
 	var (
 		title, filename, fileType string
-		episode                   *bilibili.BilibiliEpisode
+		episode                   *bilibili.Episode
 		sub                       []byte
 		exist                     bool
 	)
-	info, err := bilibili.Info(id)
+	info, err := bilibili.GetInfo(id)
 	if err != nil {
 		return err
 	}
 
-	epList, err := bilibili.Episodes(id)
+	epList, err := bilibili.GetEpisodes(id)
 	if err != nil {
 		return err
 	}
 
 	title = utils.CleanText(info.Data.Season.Title)
-	err = os.MkdirAll(title, os.ModePerm)
+	err = os.MkdirAll(filepath.Join(output, title), os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -70,7 +75,7 @@ func Run(id string) error {
 			filename = filepath.Join(output, title, fmt.Sprintf("%s.%s", utils.CleanText(s.TitleDisplay), language))
 			for _, k := range []string{".srt", ".ass"} {
 				if _, err := os.Stat(filename + k); err == nil && !overwrite {
-					log.Println("#", filename+k)
+					fmt.Println("#", filename+k)
 					exist = true
 					continue
 				}
@@ -81,17 +86,20 @@ func Run(id string) error {
 				continue
 			}
 
-			episode, err = bilibili.Episode(s.EpisodeID.String())
+			episode, err = bilibili.GetEpisode(s.EpisodeID.String())
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
 			}
 
 			if listSubs {
-				fmt.Printf("%-10s Title\n", "Key")
-				fmt.Println(strings.Repeat("-", 20))
-				for _, s := range episode.Data.Subtitles {
-					fmt.Printf("%-10s %s\n", s.Key, s.Title)
+				table := [][]string{
+					{"Title", "Key"},
 				}
+				for _, s := range episode.Data.Subtitles {
+					table = append(table, []string{s.Key, s.Title})
+				}
+				fmt.Printf("Title: %s\n\n", info.Data.Season.Title)
+				utils.PrintTable(table)
 				return nil
 			}
 
@@ -104,8 +112,32 @@ func Run(id string) error {
 			if err != nil {
 				return err
 			}
-			log.Println("*", filename+fileType)
+			fmt.Println("*", filename+fileType)
 		}
 	}
 	return nil
+}
+
+func RunTimeline() {
+	tl, err := bilibili.GetTimeline()
+	if err != nil {
+		panic(err)
+	}
+	table := [][]string{
+		{"ID", "Title", "Status"},
+	}
+	for _, s := range tl.Data.Items {
+		if timeline == "today" {
+			currentTime := time.Now()
+			timeline = currentTime.Format("Mon")
+		}
+		if s.DayOfWeek == strings.ToUpper(timeline) {
+			for _, j := range s.Cards {
+				table = append(table, []string{j.SeasonID, j.Title, j.PubTimeText})
+			}
+			fmt.Printf("Date: %s %s\n\n", s.DayOfWeek, s.FullDateText)
+			break
+		}
+	}
+	utils.PrintTable(table)
 }

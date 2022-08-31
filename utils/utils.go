@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"text/tabwriter"
 	"time"
 )
 
@@ -73,4 +74,12 @@ func WriteFile(filename string, content []byte, mTime time.Time) error {
 		return err
 	}
 	return nil
+}
+
+func PrintTable(table [][]string) {
+	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	for _, line := range table {
+		fmt.Fprintln(writer, strings.Join(line, "\t"))
+	}
+	writer.Flush()
 }
