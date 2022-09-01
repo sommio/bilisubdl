@@ -13,7 +13,10 @@ bilisubdl 37738 1042594 -l th
 bilisubdl 37738 --list-subs
 
 bilisubdl --timeline
+# show today timeline
+
 bilisubdl --timeline=mon
+# show monday timeline
 ```
 
 ## Usage
