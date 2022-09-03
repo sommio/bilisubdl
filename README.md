@@ -12,7 +12,10 @@ bilisubdl 37738 1042594 -l th
 # list 37738 subtitle language
 bilisubdl 37738 --list-subs
 
+# show today timeline
 bilisubdl --timeline
+
+# show monday timeline
 bilisubdl --timeline=mon
 ```
 
