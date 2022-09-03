@@ -43,7 +43,7 @@ func init() {
 	rootFlags.StringVarP(&output, "output", "o", "./", "Set output")
 	rootFlags.BoolVarP(&listSubs, "list-subs", "L", false, "List available subtitle language")
 	rootFlags.BoolVarP(&overwrite, "overwrite", "w", false, "Force overwrite downloaded subtitles")
-	rootFlags.StringVar(&timeline, "timeline", "-", "show timeline (sun|mon|tue|wed|thu|fri|sat|)")
+	rootFlags.StringVar(&timeline, "timeline", "-", "show timeline (sun|mon|tue|wed|thu|fri|sat)")
 	rootFlags.Lookup("timeline").NoOptDefVal = "today"
 }
 

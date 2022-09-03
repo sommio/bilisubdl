@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"strings"
 
 	"github.com/K0ng2/bilisubdl/utils"
 )
@@ -109,19 +110,16 @@ func (s *Episode) Subtitle(language string) ([]byte, string, error) {
 }
 
 func jsonToSRT(subJson *Subtitle) string {
-	var sub string
+	var sub []string
 	var content string
 	for i, s := range subJson.Body {
-		if i != 0 || i == len(subJson.Body) {
-			sub += "\n"
-		}
 		content = s.Content
 		if s.Location != 2 {
 			content = fmt.Sprintf("{\\an%d}%s", s.Location, content)
 		}
-		sub += fmt.Sprintf("%d\n%s --> %s\n%s\n", i+1, utils.SecondToTime(s.From), utils.SecondToTime(s.To), content)
+		sub = append(sub, fmt.Sprintf("%d\n%s --> %s\n%s", i+1, utils.SecondToTime(s.From), utils.SecondToTime(s.To), content))
 	}
-	return sub + "\n"
+	return strings.Join(sub, "\n\n") + "\n"
 }
 
 func GetTimeline() (*Timeline, error) {
