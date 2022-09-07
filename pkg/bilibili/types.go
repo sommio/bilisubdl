@@ -61,29 +61,29 @@ type Timeline struct {
 	TTL     int    `json:"ttl"`
 	Data    struct {
 		Items []struct {
-			DayOfWeek    string `json:"day_of_week"`
-			IsToday      bool   `json:"is_today"`
-			DateText     string `json:"date_text"`
+			DayOfWeek string `json:"day_of_week"`
+			IsToday   bool   `json:"is_today"`
+			// DateText     string `json:"date_text"`
 			FullDateText string `json:"full_date_text"`
 			Cards        []struct {
-				Type        string      `json:"type"`
-				CardType    string      `json:"card_type"`
-				Title       string      `json:"title"`
-				Cover       string      `json:"cover"`
-				View        string      `json:"view"`
-				Styles      string      `json:"styles"`
-				StyleList   interface{} `json:"style_list"`
-				SeasonID    string      `json:"season_id"`
-				EpisodeID   string      `json:"episode_id"`
-				IndexShow   string      `json:"index_show"`
-				Label       int         `json:"label"`
-				RankInfo    interface{} `json:"rank_info"`
-				ViewHistory interface{} `json:"view_history"`
-				Watched     string      `json:"watched"`
-				Duration    string      `json:"duration"`
-				ViewAt      string      `json:"view_at"`
-				PubTimeText string      `json:"pub_time_text"`
-				Unavailable bool        `json:"unavailable"`
+				// Type        string      `json:"type"`
+				// CardType    string      `json:"card_type"`
+				Title string `json:"title"`
+				// Cover       string      `json:"cover"`
+				// View        string      `json:"view"`
+				// Styles      string      `json:"styles"`
+				// StyleList   interface{} `json:"style_list"`
+				SeasonID string `json:"season_id"`
+				// EpisodeID   string      `json:"episode_id"`
+				// IndexShow   string      `json:"index_show"`
+				// Label       int         `json:"label"`
+				// RankInfo    interface{} `json:"rank_info"`
+				// ViewHistory interface{} `json:"view_history"`
+				// Watched     string      `json:"watched"`
+				// Duration    string      `json:"duration"`
+				// ViewAt      string      `json:"view_at"`
+				PubTimeText string `json:"pub_time_text"`
+				// Unavailable bool        `json:"unavailable"`
 			} `json:"cards"`
 		} `json:"items"`
 	} `json:"data"`

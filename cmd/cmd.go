@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/K0ng2/bilisubdl/pkg/bilibili"
 	"github.com/K0ng2/bilisubdl/utils"
@@ -128,8 +127,9 @@ func RunTimeline() {
 	}
 	for _, s := range tl.Data.Items {
 		if timeline == "today" {
-			currentTime := time.Now()
-			timeline = currentTime.Format("Mon")
+			if s.IsToday {
+				timeline = s.DayOfWeek
+			}
 		}
 		if s.DayOfWeek == strings.ToUpper(timeline) {
 			for _, j := range s.Cards {
