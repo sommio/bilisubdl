@@ -8,6 +8,7 @@ import (
 
 	"github.com/K0ng2/bilisubdl/pkg/bilibili"
 	"github.com/K0ng2/bilisubdl/utils"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -17,19 +18,31 @@ var (
 	listSubs  bool
 	overwrite bool
 	timeline  string
+	search    string
 )
 
 var RootCmd = &cobra.Command{
 	Use: "bilisubdl [id] [flags]",
 	Run: func(cmd *cobra.Command, args []string) {
-		if timeline != "-" {
-			RunTimeline()
-			return
-		}
-		for _, s := range args {
-			err := Run(s)
+		switch {
+		case timeline != "-":
+			err := RunTimeline()
 			if err != nil {
-				panic(err)
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+		case search != "":
+			err := RunSearch()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+		default:
+			for _, s := range args {
+				err := Run(s)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "ID:", s, err)
+				}
 			}
 		}
 	},
@@ -42,7 +55,8 @@ func init() {
 	rootFlags.StringVarP(&output, "output", "o", "./", "Set output")
 	rootFlags.BoolVarP(&listSubs, "list-subs", "L", false, "List available subtitle language")
 	rootFlags.BoolVarP(&overwrite, "overwrite", "w", false, "Force overwrite downloaded subtitles")
-	rootFlags.StringVar(&timeline, "timeline", "-", "show timeline (sun|mon|tue|wed|thu|fri|sat)")
+	rootFlags.StringVarP(&search, "search", "s", "", "Search anime")
+	rootFlags.StringVarP(&timeline, "timeline", "T", "-", "Show timeline (sun|mon|tue|wed|thu|fri|sat)")
 	rootFlags.Lookup("timeline").NoOptDefVal = "today"
 }
 
@@ -91,14 +105,16 @@ func Run(id string) error {
 			}
 
 			if listSubs {
-				table := [][]string{
-					{"Title", "Key"},
-				}
+				table := tablewriter.NewWriter(os.Stdout)
+				table.SetAutoWrapText(false)
+				table.SetAlignment(tablewriter.ALIGN_LEFT)
+				table.SetBorder(false)
+				table.SetHeader([]string{"Key", "Lang"})
 				for _, s := range episode.Data.Subtitles {
-					table = append(table, []string{s.Key, s.Title})
+					table.Append([]string{s.Key, s.Title})
 				}
-				fmt.Printf("Title: %s\n\n", info.Data.Season.Title)
-				utils.PrintTable(table)
+				fmt.Println("Title:", info.Data.Season.Title)
+				table.Render()
 				return nil
 			}
 
@@ -117,14 +133,15 @@ func Run(id string) error {
 	return nil
 }
 
-func RunTimeline() {
+func RunTimeline() error {
 	tl, err := bilibili.GetTimeline()
 	if err != nil {
-		panic(err)
+		return err
 	}
-	table := [][]string{
-		{"ID", "Title", "Status"},
-	}
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetAutoWrapText(false)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetBorder(false)
 	for _, s := range tl.Data.Items {
 		if timeline == "today" {
 			if s.IsToday {
@@ -133,11 +150,29 @@ func RunTimeline() {
 		}
 		if s.DayOfWeek == strings.ToUpper(timeline) {
 			for _, j := range s.Cards {
-				table = append(table, []string{j.SeasonID, j.Title, j.PubTimeText})
+				table.Append([]string{j.SeasonID, j.Title, j.PubTimeText})
 			}
-			fmt.Printf("Date: %s %s\n\n", s.DayOfWeek, s.FullDateText)
+			table.SetHeader([]string{"ID", fmt.Sprintf("Title (%s %s)", s.DayOfWeek, s.FullDateText), "Status"})
 			break
 		}
 	}
-	utils.PrintTable(table)
+	table.Render()
+	return nil
+}
+
+func RunSearch() error {
+	ss, err := bilibili.GetSearch(search)
+	if err != nil {
+		return err
+	}
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetAutoWrapText(false)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetBorder(false)
+	table.SetHeader([]string{"ID", "Title", "Status"})
+	for _, s := range ss.Data[1].Items {
+		table.Append([]string{s.SeasonID.String(), s.Title, s.IndexShow})
+	}
+	table.Render()
+	return nil
 }

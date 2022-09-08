@@ -58,7 +58,7 @@ type Subtitle struct {
 type Timeline struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
-	TTL     int    `json:"ttl"`
+	// TTL     int    `json:"ttl"`
 	Data    struct {
 		Items []struct {
 			DayOfWeek string `json:"day_of_week"`
@@ -85,6 +85,39 @@ type Timeline struct {
 				PubTimeText string `json:"pub_time_text"`
 				// Unavailable bool        `json:"unavailable"`
 			} `json:"cards"`
+		} `json:"items"`
+	} `json:"data"`
+}
+
+type Search struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	// TTL     int    `json:"ttl"`
+	Data    []struct {
+		// Module  string `json:"module"`
+		// Title   string `json:"title"`
+		// HasNext bool   `json:"has_next"`
+		// TrackID string `json:"track_id"`
+		Items   []struct {
+			Title          string      `json:"title"`
+			SeasonID       json.Number `json:"season_id"`
+			// Mid            int         `json:"mid"`
+			// Desc           string      `json:"desc"`
+			// Followers      string      `json:"followers"`
+			// ArchiveNum     string      `json:"archive_num"`
+			// Duration       string      `json:"duration"`
+			// Cover          string      `json:"cover"`
+			// UpFollowButton interface{} `json:"up_follow_button"`
+			// Score          int         `json:"score"`
+			// TitleMatch     interface{} `json:"title_match"`
+			// TabType        int         `json:"tab_type"`
+			// TabName        string      `json:"tab_name"`
+			// Aid            int         `json:"aid"`
+			// Avatar         string      `json:"avatar"`
+			// Label          int         `json:"label"`
+			IndexShow      string      `json:"index_show"`
+			// View           string      `json:"view"`
+			// Styles         string      `json:"styles"`
 		} `json:"items"`
 	} `json:"data"`
 }

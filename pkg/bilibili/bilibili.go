@@ -22,14 +22,18 @@ https://api.bilibili.tv/intl/gateway/web/v2/subtitle?s_locale&episode_id=368729
 */
 
 const bilibiliAPI string = "https://api.bilibili.tv/intl/gateway"
-const bilibiliInfoAPI string = bilibiliAPI + "/web/v2/ogv/play/%s?season_id=%s"
+const bilibiliInfoAPI string = bilibiliAPI + "/web/v2/ogv/play/"
 
 // const bilibiliEpisodeAPI string = bilibiliAPI + "/subtitle?s_locale&episode_id="
-const bilibiliEpisodeAPI string = bilibiliAPI + "/m/subtitle?ep_id="
+const bilibiliEpisodeAPI string = bilibiliAPI + "/m/subtitle"
 
 func GetInfo(id string) (*Info, error) {
 	var info = new(Info)
-	resp, err := utils.Request(fmt.Sprintf(bilibiliInfoAPI, "season_info", id))
+	query := map[string]string{
+		"s_locale":  "en_US",
+		"season_id": id,
+	}
+	resp, err := utils.Request(bilibiliInfoAPI+"season_info", query)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +48,11 @@ func GetInfo(id string) (*Info, error) {
 
 func GetEpisodes(id string) (*Episodes, error) {
 	var epList = new(Episodes)
-	resp, err := utils.Request(fmt.Sprintf(bilibiliInfoAPI, "episodes", id))
+	query := map[string]string{
+		"s_locale":  "en_US",
+		"season_id": id,
+	}
+	resp, err := utils.Request(bilibiliInfoAPI+"episodes", query)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +67,11 @@ func GetEpisodes(id string) (*Episodes, error) {
 
 func GetEpisode(id string) (*Episode, error) {
 	var ep = new(Episode)
-	resp, err := utils.Request(bilibiliEpisodeAPI + id)
+	query := map[string]string{
+		"s_locale":   "en_US",
+		"ep_id": id,
+	}
+	resp, err := utils.Request(bilibiliEpisodeAPI, query)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +98,8 @@ func (s *Episode) Subtitle(language string) ([]byte, string, error) {
 	if s.Data.Subtitles[index].IsMachine {
 		fmt.Println("Warning machine translation")
 	}
-	resp, err := utils.Request(s.Data.Subtitles[index].URL)
+
+	resp, err := utils.Request(s.Data.Subtitles[index].URL, nil)
 	if err != nil {
 		return nil, "", err
 	}
@@ -124,7 +137,7 @@ func jsonToSRT(subJson *Subtitle) string {
 
 func GetTimeline() (*Timeline, error) {
 	var timeline = new(Timeline)
-	resp, err := utils.Request(bilibiliAPI + "/web/v2/ogv/timeline")
+	resp, err := utils.Request(bilibiliAPI+"/web/v2/ogv/timeline", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -135,4 +148,27 @@ func GetTimeline() (*Timeline, error) {
 		return nil, fmt.Errorf("api response code %d: %s", timeline.Code, timeline.Message)
 	}
 	return timeline, nil
+}
+
+func GetSearch(s string) (*Search, error) {
+	var search = new(Search)
+	query := map[string]string{
+		"keyword":  s,
+		"platform": "web",
+		"pn":       "1",
+		"ps":       "10",
+		"s_locale": "en_US",
+	}
+	resp, err := utils.Request(bilibiliAPI+"/web/v2/search", query)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.Json(search); err != nil {
+		return nil, err
+	}
+	if search.Code != 0 {
+		return nil, fmt.Errorf("api response code %d: %s", search.Code, search.Message)
+	}
+	return search, nil
 }

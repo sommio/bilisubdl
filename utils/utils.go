@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"text/tabwriter"
 	"time"
 )
 
@@ -15,8 +14,20 @@ type Response struct {
 	*http.Response
 }
 
-func Request(url string) (*Response, error) {
-	resp, err := http.Get(url)
+func Request(url string, query map[string]string) (*Response, error) {
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	q := req.URL.Query()
+	for j, s := range query {
+		q.Add(j, s)
+	}
+	req.URL.RawQuery = q.Encode()
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -74,12 +85,4 @@ func WriteFile(filename string, content []byte, mTime time.Time) error {
 		return err
 	}
 	return nil
-}
-
-func PrintTable(table [][]string) {
-	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
-	for _, line := range table {
-		fmt.Fprintln(writer, strings.Join(line, "\t"))
-	}
-	writer.Flush()
 }
