@@ -105,11 +105,7 @@ func Run(id string) error {
 			}
 
 			if listSubs {
-				table := tablewriter.NewWriter(os.Stdout)
-				table.SetAutoWrapText(false)
-				table.SetAlignment(tablewriter.ALIGN_LEFT)
-				table.SetBorder(false)
-				table.SetHeader([]string{"Key", "Lang"})
+				table := NewTable([]string{"Key", "Lang"})
 				for _, s := range episode.Data.Subtitles {
 					table.Append([]string{s.Key, s.Title})
 				}
@@ -138,10 +134,7 @@ func RunTimeline() error {
 	if err != nil {
 		return err
 	}
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetAutoWrapText(false)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetBorder(false)
+	table := NewTable(nil)
 	for _, s := range tl.Data.Items {
 		if timeline == "today" {
 			if s.IsToday {
@@ -165,14 +158,19 @@ func RunSearch() error {
 	if err != nil {
 		return err
 	}
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetAutoWrapText(false)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetBorder(false)
-	table.SetHeader([]string{"ID", "Title", "Status"})
+	table := NewTable([]string{"ID", "Title", "Status"})
 	for _, s := range ss.Data[1].Items {
 		table.Append([]string{s.SeasonID.String(), s.Title, s.IndexShow})
 	}
 	table.Render()
 	return nil
+}
+
+func NewTable(header []string) *tablewriter.Table {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetAutoWrapText(false)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetBorder(false)
+	table.SetHeader(header)
+	return table
 }
