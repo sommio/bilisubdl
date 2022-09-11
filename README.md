@@ -22,13 +22,16 @@ bilisubdl --timeline=mon
 ## Usage
 
 ```bash
-bilisubdl [id] [flags]
+Usage:
+  bilisubdl [id] [flags]
 
 Flags:
-  -h, --help              help for bilisubdl
-  -l, --language string   Subtitle language to download (e.g. en)
-  -L, --list-subs         List available subtitles language
-  -o, --output string     Set output destination (default "./")
-  -w, --overwrite         Force overwrite downloaded subtitles
-  -v, --version           version for bilisubdl
+  -h, --help                        help for bilisubdl
+  -l, --language string             Subtitle language to download (e.g. en)
+  -L, --list-subs                   List available subtitle language
+  -o, --output string               Set output (default "./")
+  -w, --overwrite                   Force overwrite downloaded subtitles
+  -s, --search string               Search anime
+  -T, --timeline string[="today"]   Show timeline (sun|mon|tue|wed|thu|fri|sat) (default "-")
+  -v, --version                     version for bilisubdl
 ```
