@@ -159,8 +159,13 @@ func RunSearch() error {
 		return err
 	}
 	table := NewTable([]string{"ID", "Title", "Status"})
-	for _, s := range ss.Data[1].Items {
-		table.Append([]string{s.SeasonID.String(), s.Title, s.IndexShow})
+	for _, j := range ss.Data {
+		if j.Module == "ogv" || j.Module == "ogv_subject" {
+			for _, s := range j.Items {
+				table.Append([]string{s.SeasonID.String(), s.Title, s.IndexShow})
+			}
+			break
+		}
 	}
 	table.Render()
 	return nil

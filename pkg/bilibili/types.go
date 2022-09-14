@@ -59,7 +59,7 @@ type Timeline struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	// TTL     int    `json:"ttl"`
-	Data    struct {
+	Data struct {
 		Items []struct {
 			DayOfWeek string `json:"day_of_week"`
 			IsToday   bool   `json:"is_today"`
@@ -93,14 +93,14 @@ type Search struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	// TTL     int    `json:"ttl"`
-	Data    []struct {
-		// Module  string `json:"module"`
+	Data []struct {
+		Module string `json:"module"`
 		// Title   string `json:"title"`
 		// HasNext bool   `json:"has_next"`
 		// TrackID string `json:"track_id"`
-		Items   []struct {
-			Title          string      `json:"title"`
-			SeasonID       json.Number `json:"season_id"`
+		Items []struct {
+			Title    string      `json:"title"`
+			SeasonID json.Number `json:"season_id"`
 			// Mid            int         `json:"mid"`
 			// Desc           string      `json:"desc"`
 			// Followers      string      `json:"followers"`
@@ -115,7 +115,7 @@ type Search struct {
 			// Aid            int         `json:"aid"`
 			// Avatar         string      `json:"avatar"`
 			// Label          int         `json:"label"`
-			IndexShow      string      `json:"index_show"`
+			IndexShow string `json:"index_show"`
 			// View           string      `json:"view"`
 			// Styles         string      `json:"styles"`
 		} `json:"items"`
