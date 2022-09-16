@@ -75,14 +75,14 @@ type Timeline struct {
 				// StyleList   interface{} `json:"style_list"`
 				SeasonID string `json:"season_id"`
 				// EpisodeID   string      `json:"episode_id"`
-				// IndexShow   string      `json:"index_show"`
+				IndexShow string `json:"index_show"`
 				// Label       int         `json:"label"`
 				// RankInfo    interface{} `json:"rank_info"`
 				// ViewHistory interface{} `json:"view_history"`
 				// Watched     string      `json:"watched"`
 				// Duration    string      `json:"duration"`
 				// ViewAt      string      `json:"view_at"`
-				PubTimeText string `json:"pub_time_text"`
+				// PubTimeText string `json:"pub_time_text"`
 				// Unavailable bool        `json:"unavailable"`
 			} `json:"cards"`
 		} `json:"items"`

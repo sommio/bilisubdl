@@ -136,14 +136,12 @@ func RunTimeline() error {
 	}
 	table := NewTable(nil)
 	for _, s := range tl.Data.Items {
-		if timeline == "today" {
-			if s.IsToday {
-				timeline = s.DayOfWeek
-			}
+		if timeline == "today" && s.IsToday {
+			timeline = s.DayOfWeek
 		}
 		if s.DayOfWeek == strings.ToUpper(timeline) {
 			for _, j := range s.Cards {
-				table.Append([]string{j.SeasonID, j.Title, j.PubTimeText})
+				table.Append([]string{j.SeasonID, j.Title, j.IndexShow})
 			}
 			table.SetHeader([]string{"ID", fmt.Sprintf("Title (%s %s)", s.DayOfWeek, s.FullDateText), "Status"})
 			break

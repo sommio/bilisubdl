@@ -68,8 +68,8 @@ func GetEpisodes(id string) (*Episodes, error) {
 func GetEpisode(id string) (*Episode, error) {
 	var ep = new(Episode)
 	query := map[string]string{
-		"s_locale":   "en_US",
-		"ep_id": id,
+		"s_locale": "en_US",
+		"ep_id":    id,
 	}
 	resp, err := utils.Request(bilibiliEpisodeAPI, query)
 	if err != nil {
@@ -137,7 +137,7 @@ func jsonToSRT(subJson *Subtitle) string {
 
 func GetTimeline() (*Timeline, error) {
 	var timeline = new(Timeline)
-	resp, err := utils.Request(bilibiliAPI+"/web/v2/ogv/timeline", nil)
+	resp, err := utils.Request(bilibiliAPI+"/web/v2/home/timeline", nil)
 	if err != nil {
 		return nil, err
 	}
