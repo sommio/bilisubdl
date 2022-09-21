@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -85,4 +86,26 @@ func WriteFile(filename string, content []byte, mTime time.Time) error {
 		return err
 	}
 	return nil
+}
+
+func ListSelect(list []string, max int) []int {
+	var item []int
+	for _, s := range list {
+		if strings.Contains(s, "-") {
+			b := strings.Split(s, "-")
+			b0, _ := strconv.Atoi(b[0])
+			b1, _ := strconv.Atoi(b[1])
+			for i := b0; i <= b1; i++ {
+				if i <= max {
+					item = append(item, i)
+				}
+			}
+		} else {
+			a, _ := strconv.Atoi(s)
+			if a <= max {
+				item = append(item, a)
+			}
+		}
+	}
+	return item
 }
