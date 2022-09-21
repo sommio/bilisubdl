@@ -26,12 +26,15 @@ Usage:
   bilisubdl [id] [flags]
 
 Flags:
+      --episode stringArray         Episode select (e.g. 5,8-10)
   -h, --help                        help for bilisubdl
   -l, --language string             Subtitle language to download (e.g. en)
-  -L, --list-subs                   List available subtitle language
+  -L, --list-language               List available subtitle language
+      --list-section                List available section
   -o, --output string               Set output (default "./")
   -w, --overwrite                   Force overwrite downloaded subtitles
   -s, --search string               Search anime
+      --section stringArray         Section select (e.g. 5,8-10)
   -T, --timeline string[="today"]   Show timeline (sun|mon|tue|wed|thu|fri|sat) (default "-")
   -v, --version                     version for bilisubdl
 ```
