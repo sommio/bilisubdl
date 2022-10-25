@@ -16,7 +16,9 @@ type Response struct {
 }
 
 func Request(url string, query map[string]string) (*Response, error) {
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -66,7 +68,9 @@ func CleanText(t string) string {
 	for _, elem := range toBeReplaces {
 		t = strings.ReplaceAll(t, elem, "_")
 	}
-	t = strings.ReplaceAll(t, "\n", " ")
+	for _, elem := range []string{"\n", "\t"} {
+		t = strings.ReplaceAll(t, elem, " ")
+	}
 
 	return strings.TrimSpace(strings.TrimRight(t, "."))
 }
