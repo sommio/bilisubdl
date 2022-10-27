@@ -35,7 +35,7 @@ var RootCmd = &cobra.Command{
 			err = RunListLanguage(args[0])
 		case listSection:
 			err = RunListSection(args[0])
-		case timeline != "-":
+		case timeline != "":
 			err = RunTimeline()
 		case search != "":
 			err = RunSearch()
@@ -63,7 +63,7 @@ func init() {
 	rootFlags.BoolVar(&listSection, "list-section", false, "List available section")
 	rootFlags.BoolVarP(&overwrite, "overwrite", "w", false, "Force overwrite downloaded subtitles")
 	rootFlags.StringVarP(&search, "search", "s", "", "Search anime")
-	rootFlags.StringVarP(&timeline, "timeline", "T", "-", "Show timeline (sun|mon|tue|wed|thu|fri|sat)")
+	rootFlags.StringVarP(&timeline, "timeline", "T", "", "Show timeline (sun|mon|tue|wed|thu|fri|sat)")
 	rootFlags.Lookup("timeline").NoOptDefVal = "today"
 	rootFlags.StringArrayVar(&sectionSelect, "section", nil, "Section select (e.g. 5,8-10)")
 	rootFlags.StringArrayVar(&episodeSelect, "episode", nil, "Episode select (e.g. 5,8-10)")
@@ -163,7 +163,7 @@ func RunTimeline() error {
 }
 
 func RunSearch() error {
-	ss, err := bilibili.GetSearch(search)
+	ss, err := bilibili.GetSearch(search, "10")
 	if err != nil {
 		return err
 	}

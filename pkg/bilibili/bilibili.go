@@ -41,7 +41,7 @@ func GetInfo(id string) (*Info, error) {
 		return nil, err
 	}
 	if info.Code != 0 {
-		return nil, fmt.Errorf("api response code %d: %s", info.Code, info.Message)
+		return nil, fmt.Errorf("Info api response code %d: %s", info.Code, info.Message)
 	}
 	return info, nil
 }
@@ -60,7 +60,7 @@ func GetEpisodes(id string) (*Episodes, error) {
 		return nil, err
 	}
 	if epList.Code != 0 {
-		return nil, fmt.Errorf("api response code %d: %s", epList.Code, epList.Message)
+		return nil, fmt.Errorf("Episodes api response code %d: %s", epList.Code, epList.Message)
 	}
 	return epList, nil
 }
@@ -79,7 +79,7 @@ func GetEpisode(id string) (*Episode, error) {
 		return nil, err
 	}
 	if ep.Code != 0 {
-		return nil, fmt.Errorf("api response code %d: %s", ep.Code, ep.Message)
+		return nil, fmt.Errorf("Episode api response code %d: %s", ep.Code, ep.Message)
 	}
 	return ep, nil
 }
@@ -150,13 +150,13 @@ func GetTimeline() (*Timeline, error) {
 	return timeline, nil
 }
 
-func GetSearch(s string) (*Search, error) {
+func GetSearch(s string, item string) (*Search, error) {
 	var search = new(Search)
 	query := map[string]string{
 		"keyword":  s,
 		"platform": "web",
 		"pn":       "1",
-		"ps":       "10",
+		"ps":       item,
 		"s_locale": "en_US",
 	}
 	resp, err := utils.Request(bilibiliAPI+"/web/v2/search", query)
