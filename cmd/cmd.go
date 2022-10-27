@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/K0ng2/bilisubdl/pkg/bilibili"
 	"github.com/K0ng2/bilisubdl/utils"
@@ -20,6 +21,7 @@ var (
 	listLang      bool
 	listSection   bool
 	overwrite     bool
+	dlepisode     bool
 	timeline      string
 	search        string
 	sectionSelect []string
@@ -39,6 +41,8 @@ var RootCmd = &cobra.Command{
 			err = RunTimeline()
 		case search != "":
 			err = RunSearch()
+		case dlepisode:
+			err = RunDlEpisode(args)
 		default:
 			for _, s := range args {
 				err := Run(s)
@@ -61,6 +65,7 @@ func init() {
 	rootFlags.StringVarP(&output, "output", "o", "./", "Set output")
 	rootFlags.BoolVarP(&listLang, "list-language", "L", false, "List available subtitle language")
 	rootFlags.BoolVar(&listSection, "list-section", false, "List available section")
+	rootFlags.BoolVar(&dlepisode, "dlepisode", false, "Download subtitle from episode id")
 	rootFlags.BoolVarP(&overwrite, "overwrite", "w", false, "Force overwrite downloaded subtitles")
 	rootFlags.StringVarP(&search, "search", "s", "", "Search anime")
 	rootFlags.StringVarP(&timeline, "timeline", "T", "", "Show timeline (sun|mon|tue|wed|thu|fri|sat)")
@@ -71,11 +76,9 @@ func init() {
 
 func Run(id string) error {
 	var (
-		title, filename, fileType string
-		episode                   *bilibili.Episode
-		sub                       []byte
-		exist                     bool
-		maxEp                     int
+		title, filename string
+		exist           bool
+		maxEp           int
 	)
 	info, err := bilibili.GetInfo(id)
 	if err != nil {
@@ -106,6 +109,7 @@ func Run(id string) error {
 				continue
 			}
 			filename = filepath.Join(output, title, fmt.Sprintf("%s.%s", utils.CleanText(s.TitleDisplay), language))
+
 			for _, k := range []string{".srt", ".ass"} {
 				if _, err := os.Stat(filename + k); err == nil && !overwrite {
 					fmt.Println("#", filename+k)
@@ -119,24 +123,46 @@ func Run(id string) error {
 				continue
 			}
 
-			episode, err = bilibili.GetEpisode(s.EpisodeID.String())
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			sub, fileType, err = episode.Subtitle(language)
+			err = downloadSub(s.EpisodeID.String(), filename, s.PublishTime)
 			if err != nil {
 				return err
 			}
-
-			err := utils.WriteFile(filename+fileType, sub, s.PublishTime)
-			if err != nil {
-				return err
-			}
-			fmt.Println("*", filename+fileType)
 		}
 		maxEp += len(j.Episodes)
 	}
+	return nil
+}
+
+func RunDlEpisode(ids []string) error {
+	for _, id := range ids {
+		err := downloadSub(id, "", time.Now())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func downloadSub(id, filename string, publishTime time.Time) error {
+	episode, err := bilibili.GetEpisode(id)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	sub, fileType, err := episode.Subtitle(language)
+	if err != nil {
+		return err
+	}
+
+	if filename == "" {
+		filename = id
+	}
+
+	err = utils.WriteFile(filename+fileType, sub, publishTime)
+	if err != nil {
+		return err
+	}
+	fmt.Println("*", filename+fileType)
 	return nil
 }
 
