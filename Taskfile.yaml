@@ -1,0 +1,29 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  PROJECT: "bilisubdl"
+  OS:
+    sh: go env GOOS
+  ARCH:
+    sh: go env GOARCH
+
+tasks:
+  build:
+    cmds:
+      - go build -v -o "./dist/{{.PROJECT}}_{{.OS}}_{{.ARCH}}/{{.PROJECT}}{{exeExt}}" -ldflags="-X 'main.version={{now | date "2006-01-02 15:04:05"}}'"
+
+  release-test:
+    cmds:
+      - goreleaser release --snapshot --rm-dist
+
+  releases:
+    cmds:
+      - git tag -a "v{{.CLI_ARGS}}" -m "v{{.CLI_ARGS}}"
+      - git push origin "v{{.CLI_ARGS}}"
+      - goreleaser release --rm-dist
+
+  test:
+    cmds:
+      - go test ./... -v
