@@ -13,7 +13,7 @@ Download 37738 and 1042594 with thai language
 
 List 37738 subtitle language
 
-`bilisubdl 37738 --list-subs`
+`bilisubdl 37738 --list-language`
 
 Show today timeline
 
