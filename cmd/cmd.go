@@ -245,9 +245,9 @@ func RunListSection(id string) error {
 	if err != nil {
 		return err
 	}
-	table := newTable([]string{"index", "section"})
+	table := newTable([]string{"#", "episode", "title"})
 	for i, s := range epList.Data.Sections {
-		table.Append([]string{strconv.Itoa(i + 1), s.EpListTitle})
+		table.Append([]string{strconv.Itoa(i + 1), s.EpListTitle, s.Title})
 	}
 	fmt.Println("Title:", info.Data.Season.Title)
 	table.Render()

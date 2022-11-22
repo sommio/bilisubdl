@@ -20,6 +20,7 @@ type Episodes struct {
 	Message string `json:"message"`
 	Data    struct {
 		Sections []struct {
+			Title       string `json:"title"`
 			EpListTitle string `json:"ep_list_title"`
 			Episodes    []struct {
 				ShortTitleDisplay string      `json:"short_title_display"`
