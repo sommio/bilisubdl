@@ -24,6 +24,7 @@ type Episodes struct {
 			EpListTitle string `json:"ep_list_title"`
 			Episodes    []struct {
 				ShortTitleDisplay string      `json:"short_title_display"`
+				LongTitleDisplay  string      `json:"long_title_display"`
 				EpisodeID         json.Number `json:"episode_id"`
 				TitleDisplay      string      `json:"title_display"`
 				PublishTime       time.Time   `json:"publish_time"`

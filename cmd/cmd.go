@@ -20,6 +20,7 @@ var (
 	output        string
 	listLang      bool
 	listSection   bool
+	listEpisode   bool
 	overwrite     bool
 	dlepisode     bool
 	timeline      string
@@ -38,6 +39,8 @@ var RootCmd = &cobra.Command{
 			err = RunListLanguage(args[0])
 		case listSection:
 			err = RunListSection(args[0])
+		case listEpisode:
+			err = RunListEpisode(args[0])
 		case timeline != "":
 			err = RunTimeline()
 		case search != "":
@@ -66,6 +69,7 @@ func init() {
 	rootFlags.StringVarP(&output, "output", "o", "./", "Set output directory")
 	rootFlags.BoolVarP(&listLang, "list-language", "L", false, "List available subtitle language")
 	rootFlags.BoolVar(&listSection, "list-section", false, "List available section")
+	rootFlags.BoolVar(&listEpisode, "list-episode", false, "List available episode")
 	rootFlags.BoolVar(&dlepisode, "dlepisode", false, "Download subtitle from episode id")
 	rootFlags.StringVar(&_filename, "filename", "", "Set subtitle filename (e.g. Abc %d = Abc 1, Abc %02d = Abc 02)\n(This option only works in combination with --dlepisode flag)")
 	rootFlags.BoolVarP(&overwrite, "overwrite", "w", false, "Force overwrite downloaded subtitles")
@@ -248,6 +252,36 @@ func RunListSection(id string) error {
 	table := newTable([]string{"#", "episode", "title"})
 	for i, s := range epList.Data.Sections {
 		table.Append([]string{strconv.Itoa(i + 1), s.EpListTitle, s.Title})
+	}
+	fmt.Println("Title:", info.Data.Season.Title)
+	table.Render()
+	return nil
+}
+
+func RunListEpisode(id string) error {
+	var maxEp int
+	info, err := bilibili.GetInfo(id)
+	if err != nil {
+		return err
+	}
+	epList, err := bilibili.GetEpisodes(id)
+	if err != nil {
+		return err
+	}
+	table := newTable([]string{"#", "section", "title"})
+	sectionIndex := utils.ListSelect(sectionSelect, len(epList.Data.Sections))
+	for ji, j := range epList.Data.Sections {
+		if sectionSelect != nil && !slices.Contains(sectionIndex, ji+1) {
+			continue
+		}
+		episodeIndex := utils.ListSelect(episodeSelect, maxEp+len(j.Episodes))
+		for si, s := range j.Episodes {
+			if episodeSelect != nil && !slices.Contains(episodeIndex, maxEp+si+1) {
+				continue
+			}
+			table.Append([]string{s.ShortTitleDisplay, strconv.Itoa(ji + 1), s.LongTitleDisplay})
+		}
+		maxEp += len(j.Episodes)
 	}
 	fmt.Println("Title:", info.Data.Season.Title)
 	table.Render()
