@@ -2,7 +2,6 @@
 
 ## Examples
 
-
 Download 1049041 with english language
 
 `bilisubdl 1049041 -l en`
@@ -32,10 +31,11 @@ Usage:
 Flags:
       --dlepisode                   Download subtitle from episode id
       --episode stringArray         Episode select (e.g. 5,8-10)
-      --filename string             Set subtitle filename (e.g. Abc %d = Abc 1, Abc %02d = Abc 02)
-                                    (This option only works in combination with --dlepisode flag) 
+      --filename string             Set subtitle filename (e.g. Abc %d = Abc 1, Abc %02d = Abc 01)
+                                    (This option only works in combination with --dlepisode flag)
   -h, --help                        help for bilisubdl
   -l, --language string             Subtitle language to download (e.g. en)
+      --list-episode                List available episode
   -L, --list-language               List available subtitle language
       --list-section                List available section
   -o, --output string               Set output directory (default "./")
