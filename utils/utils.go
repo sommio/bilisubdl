@@ -36,7 +36,7 @@ func Request(url string, query map[string]string) (*Response, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("http error code %d", resp.StatusCode)
+		return nil, fmt.Errorf("http error code %d %s", resp.StatusCode, resp.Status)
 	}
 
 	return &Response{resp}, nil
