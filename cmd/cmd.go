@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -23,6 +24,7 @@ var (
 	listEpisode   bool
 	overwrite     bool
 	dlepisode     bool
+	isJson        bool
 	timeline      string
 	search        string
 	_filename     string
@@ -60,7 +62,7 @@ var RootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 	},
-	Example: "bilisubdl 37738 1042594 -l th\nbilisubdl 37738 --list-subs\nbilisubdl --timeline=sun",
+	Example: "bilisubdl 37738 1042594 -l th\nbilisubdl 37738 --list-language\nbilisubdl --timeline=sun",
 }
 
 func init() {
@@ -71,6 +73,7 @@ func init() {
 	rootFlags.BoolVar(&listSection, "list-section", false, "List available section")
 	rootFlags.BoolVar(&listEpisode, "list-episode", false, "List available episode")
 	rootFlags.BoolVar(&dlepisode, "dlepisode", false, "Download subtitle from episode id")
+	rootFlags.BoolVar(&isJson, "json", false, "Display in JSON format.")
 	rootFlags.StringVar(&_filename, "filename", "", "Set subtitle filename (e.g. Abc %d = Abc 1, Abc %02d = Abc 02)\n(This option only works in combination with --dlepisode flag)")
 	rootFlags.BoolVarP(&overwrite, "overwrite", "w", false, "Force overwrite downloaded subtitles")
 	rootFlags.StringVarP(&search, "search", "s", "", "Search anime")
@@ -180,6 +183,14 @@ func RunTimeline() error {
 	if err != nil {
 		return err
 	}
+	if isJson {
+		b, err := json.Marshal(tl)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(b))
+		return nil
+	}
 	table := newTable(nil)
 	for _, s := range tl.Data.Items {
 		if timeline == "today" && s.IsToday {
@@ -201,6 +212,14 @@ func RunSearch() error {
 	ss, err := bilibili.GetSearch(search, "10")
 	if err != nil {
 		return err
+	}
+	if isJson {
+		b, err := json.Marshal(ss)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(b))
+		return nil
 	}
 	table := newTable([]string{"ID", "Title", "Status"})
 	for _, j := range ss.Data {
