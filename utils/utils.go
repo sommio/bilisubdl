@@ -17,7 +17,7 @@ type Response struct {
 
 func Request(url string, query map[string]string) (*Response, error) {
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 30 * time.Second,
 	}
 
 	req, err := http.NewRequest("GET", url, nil)
