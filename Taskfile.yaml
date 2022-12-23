@@ -27,3 +27,7 @@ tasks:
   test:
     cmds:
       - go test ./... -v
+
+  install:
+    cmds:
+      - go install -v -ldflags="-X 'main.version={{now | date "2006-01-02 15:04:05"}}'"
