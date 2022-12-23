@@ -99,13 +99,6 @@ func Run(id string) error {
 	}
 
 	title = utils.CleanText(info.Data.Season.Title)
-	if !listLang {
-		err = os.MkdirAll(filepath.Join(output, title), 0700)
-		if err != nil {
-			return err
-		}
-	}
-
 	sectionIndex := utils.ListSelect(sectionSelect, len(epList.Data.Sections))
 	for ji, j := range epList.Data.Sections {
 		if sectionSelect != nil && !slices.Contains(sectionIndex, ji+1) {
@@ -158,6 +151,11 @@ func downloadSub(id, filename string, publishTime time.Time) error {
 			fmt.Println("#", filename+k)
 			return nil
 		}
+	}
+
+	err := os.MkdirAll(filepath.Join(filepath.Dir(filename)), 0700)
+	if err != nil {
+		return err
 	}
 
 	episode, err := bilibili.GetEpisode(id)
