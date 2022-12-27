@@ -45,3 +45,9 @@ Flags:
   -T, --timeline string[="today"]   Show timeline (sun|mon|tue|wed|thu|fri|sat)
   -v, --version                     version for bilisubdl
 ```
+
+## Installing
+
+The `bilisubdl` command on Windows using [Scoop](https://scoop.sh/) 🍨:
+
+    scoop install https://raw.githubusercontent.com/K0ng2/scoop-bucket/main/bucket/bilisubdl.json
