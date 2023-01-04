@@ -4,50 +4,49 @@
 
 Download 1049041 with english language
 
-`bilisubdl 1049041 -l en`
+`bilisubdl dl 1049041 -l en`
 
 Download 37738 and 1042594 with thai language
 
-`bilisubdl 37738 1042594 -l th`
+`bilisubdl dl 37738 1042594 -l th`
 
 List 37738 subtitle language
 
-`bilisubdl 37738 --list-language`
+`bilisubdl list 37738 -L`
 
 Show today timeline
 
-`bilisubdl --timeline`
+`bilisubdl timeline`
 
 Show monday timeline
 
-`bilisubdl --timeline=mon`
+`bilisubdl timeline mon`
 
 ## Usage
 
-```bash
+```txt
 Usage:
-  bilisubdl [id] [flags]
+  bilisubdl [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  dl          Download subtitle from ID.
+  help        Help about any command
+  list        Show info
+  search      Search anime
+  timeline    Show timeline (sun|mon|tue|wed|thu|fri|sat)
 
 Flags:
-      --dlepisode                   Download subtitle from episode id
-      --episode stringArray         Episode select (e.g. 5,8-10)
-      --filename string             Set subtitle filename (e.g. Abc %d = Abc 1, Abc %02d = Abc 01)
-                                    (This option only works in combination with --dlepisode flag)
-  -h, --help                        help for bilisubdl
-  -l, --language string             Subtitle language to download (e.g. en)
-      --list-episode                List available episode
-  -L, --list-language               List available subtitle language
-      --list-section                List available section
-  -o, --output string               Set output directory (default "./")
-  -w, --overwrite                   Force overwrite downloaded subtitles
-  -s, --search string               Search anime
-      --section stringArray         Section select (e.g. 5,8-10)
-  -T, --timeline string[="today"]   Show timeline (sun|mon|tue|wed|thu|fri|sat)
-  -v, --version                     version for bilisubdl
+  -h, --help      help for bilisubdl
+  -v, --version   version for bilisubdl
+
+Use "bilisubdl [command] --help" for more information about a command.
 ```
 
 ## Installing
 
-The `bilisubdl` command on Windows using [Scoop](https://scoop.sh/) 🍨:
+The `bilisubdl` command on Windows using [Scoop](https://scoop.sh/)
 
-    scoop install https://raw.githubusercontent.com/K0ng2/scoop-bucket/main/bucket/bilisubdl.json
+```txt
+scoop install https://raw.githubusercontent.com/K0ng2/scoop-bucket/main/bucket/bilisubdl.json
+```
