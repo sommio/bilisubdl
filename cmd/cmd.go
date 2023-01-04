@@ -13,6 +13,7 @@ import (
 	"github.com/K0ng2/bilisubdl/utils"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 	"golang.org/x/exp/slices"
 )
 
@@ -25,62 +26,124 @@ var (
 	overwrite     bool
 	dlepisode     bool
 	isJson        bool
+	quiet         bool
 	timeline      string
 	search        string
-	_filename     string
+	epFilename    string
 	sectionSelect []string
 	episodeSelect []string
 )
 
 var RootCmd = &cobra.Command{
-	Use: "bilisubdl [id] [flags]",
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		switch {
-		case listLang:
-			err = RunListLanguage(args[0])
-		case listSection:
-			err = RunListSection(args[0])
-		case listEpisode:
-			err = RunListEpisode(args[0])
-		case timeline != "":
-			err = RunTimeline()
-		case search != "":
-			err = RunSearch()
-		case dlepisode:
-			err = RunDlEpisode(args)
-		default:
-			for _, s := range args {
-				err := Run(s)
-				if err != nil {
-					fmt.Fprintln(os.Stderr, "ID:", s, err)
-				}
+	Use: "bilisubdl",
+}
+
+var dlCmd = &cobra.Command{
+	Use:     "dl [ID] [flags]",
+	Short:   "Download subtitle from ID.",
+	Args:    cobra.MinimumNArgs(1),
+	Example: "bilisubdl dl 37738 1042594 -l th",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		for _, s := range args {
+			err := Run(s)
+			if err != nil {
+				return fmt.Errorf("[ID: %s] %w", s, err)
 			}
 		}
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
+		return nil
 	},
-	Example: "bilisubdl 37738 1042594 -l th\nbilisubdl 37738 --list-language\nbilisubdl --timeline=sun",
+}
+
+var searchCmd = &cobra.Command{
+	Use:   "search [keyword]",
+	Short: "Search anime",
+	Args: func(cmd *cobra.Command, args []string) error {
+		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
+			return err
+		}
+		if err := cobra.MaximumNArgs(1)(cmd, args); err != nil {
+			return err
+		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		err := RunSearch(args[0])
+		if err != nil {
+			return fmt.Errorf("[keyword: %s] %w", args[0], err)
+		}
+		return nil
+	},
+}
+
+var timelineCmd = &cobra.Command{
+	Use:   "timeline",
+	Short: "Show timeline (sun|mon|tue|wed|thu|fri|sat)",
+	Args:  cobra.MaximumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return RunTimeline("")
+		}
+		return RunTimeline(args[0])
+	},
+	Example: "bilisubdl timeline\nbilisubdl timeline sun",
+}
+
+var listCmd = &cobra.Command{
+	Use:   "list [ID]",
+	Short: "Show info",
+	Args: func(cmd *cobra.Command, args []string) error {
+		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
+			return err
+		}
+		if err := cobra.MaximumNArgs(1)(cmd, args); err != nil {
+			return err
+		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		switch {
+		case listLang:
+			return RunListLanguage(args[0])
+		case listSection:
+			return RunListSection(args[0])
+		case listEpisode:
+			return RunListEpisode(args[0])
+		}
+		return nil
+	},
 }
 
 func init() {
-	rootFlags := RootCmd.PersistentFlags()
-	rootFlags.StringVarP(&language, "language", "l", "", "Subtitle language to download (e.g. en)")
-	rootFlags.StringVarP(&output, "output", "o", "./", "Set output directory")
-	rootFlags.BoolVarP(&listLang, "list-language", "L", false, "List available subtitle language")
-	rootFlags.BoolVar(&listSection, "list-section", false, "List available section")
-	rootFlags.BoolVar(&listEpisode, "list-episode", false, "List available episode")
-	rootFlags.BoolVar(&dlepisode, "dlepisode", false, "Download subtitle from episode id")
-	rootFlags.BoolVar(&isJson, "json", false, "Display in JSON format.")
-	rootFlags.StringVar(&_filename, "filename", "", "Set subtitle filename (e.g. Abc %d = Abc 1, Abc %02d = Abc 02)\n(This option only works in combination with --dlepisode flag)")
-	rootFlags.BoolVarP(&overwrite, "overwrite", "w", false, "Force overwrite downloaded subtitles")
-	rootFlags.StringVarP(&search, "search", "s", "", "Search anime")
-	rootFlags.StringVarP(&timeline, "timeline", "T", "", "Show timeline (sun|mon|tue|wed|thu|fri|sat)")
-	rootFlags.Lookup("timeline").NoOptDefVal = "today"
-	rootFlags.StringArrayVar(&sectionSelect, "section", nil, "Section select (e.g. 5,8-10)")
-	rootFlags.StringArrayVar(&episodeSelect, "episode", nil, "Episode select (e.g. 5,8-10)")
+	RootCmd.AddCommand(dlCmd, searchCmd, timelineCmd, listCmd)
+
+	selectFlags := flag.NewFlagSet("selectFlags", flag.ExitOnError)
+	selectFlags.StringArrayVar(&sectionSelect, "section", nil, "Section select (e.g. 5,8-10)")
+	selectFlags.StringArrayVar(&episodeSelect, "episode", nil, "Episode select (e.g. 5,8-10)")
+
+	dlFlag := dlCmd.PersistentFlags()
+	dlFlag.StringVarP(&language, "language", "l", "", "Subtitle language to download (e.g. en)")
+	dlFlag.StringVarP(&output, "output", "o", "./", "Set output directory")
+	dlFlag.BoolVar(&dlepisode, "dlepisode", false, "Download subtitle from episode id")
+	dlFlag.StringVar(&epFilename, "filename", "", "Set subtitle filename (e.g. Abc %d = Abc 1, Abc %02d = Abc 02)\n(This option only works in combination with --dlepisode flag)")
+	dlFlag.BoolVarP(&overwrite, "overwrite", "w", false, "Force overwrite downloaded subtitles")
+	dlFlag.BoolVarP(&quiet, "quiet", "q", false, "Quiet verbose")
+	dlFlag.AddFlagSet(selectFlags)
+	dlCmd.MarkFlagRequired("language")
+	dlCmd.MarkFlagsRequiredTogether("filename", "dlepisode")
+
+	shareFlags := flag.NewFlagSet("shareFlags", flag.ExitOnError)
+	shareFlags.BoolVar(&isJson, "json", false, "Display in JSON format.")
+	searchFlag := searchCmd.PersistentFlags()
+	searchFlag.AddFlagSet(shareFlags)
+
+	timelineFlag := timelineCmd.PersistentFlags()
+	timelineFlag.AddFlagSet(shareFlags)
+
+	listFlag := listCmd.PersistentFlags()
+	listFlag.BoolVarP(&listLang, "language", "L", false, "List available subtitle language")
+	listFlag.BoolVarP(&listSection, "section", "S", false, "List available section")
+	listFlag.BoolVarP(&listEpisode, "episode", "E", false, "List available episode")
+	listCmd.MarkFlagsMutuallyExclusive("language", "section", "episode")
 }
 
 func Run(id string) error {
@@ -132,8 +195,8 @@ func RunDlEpisode(ids []string) error {
 
 	for i, id := range ids {
 		filename = id
-		if _filename != "" {
-			filename = fmt.Sprintf(_filename, i+1)
+		if epFilename != "" {
+			filename = fmt.Sprintf(epFilename, i+1)
 		}
 		filename = filepath.Join(output, filename)
 
@@ -148,7 +211,9 @@ func RunDlEpisode(ids []string) error {
 func downloadSub(id, filename string, publishTime time.Time) error {
 	for _, k := range []string{".srt", ".ass"} {
 		if _, err := os.Stat(filename + k); err == nil && !overwrite {
-			fmt.Println("#", filename+k)
+			if !quiet {
+				fmt.Println("#", filename+k)
+			}
 			return nil
 		}
 	}
@@ -160,7 +225,7 @@ func downloadSub(id, filename string, publishTime time.Time) error {
 
 	episode, err := bilibili.GetEpisode(id)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	sub, fileType, err := episode.Subtitle(language)
@@ -172,11 +237,13 @@ func downloadSub(id, filename string, publishTime time.Time) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("*", filename+fileType)
+	if !quiet {
+		fmt.Println("*", filename+fileType)
+	}
 	return nil
 }
 
-func RunTimeline() error {
+func RunTimeline(day string) error {
 	tl, err := bilibili.GetTimeline()
 	if err != nil {
 		return err
@@ -189,25 +256,29 @@ func RunTimeline() error {
 		fmt.Println(string(b))
 		return nil
 	}
-	table := newTable(nil)
 	for _, s := range tl.Data.Items {
-		if timeline == "today" && s.IsToday {
-			timeline = s.DayOfWeek
+		if day == "" && s.IsToday {
+			day = s.DayOfWeek
 		}
-		if s.DayOfWeek == strings.ToUpper(timeline) {
+		if s.DayOfWeek == strings.ToUpper(day) {
+			if len(s.Cards) == 0 {
+				fmt.Println("No updates")
+				return nil
+			}
+			table := newTable(nil)
 			for _, j := range s.Cards {
 				table.Append([]string{j.SeasonID, j.Title, j.IndexShow})
 			}
 			table.SetHeader([]string{"ID", fmt.Sprintf("Title (%s %s)", s.DayOfWeek, s.FullDateText), "Status"})
+			table.Render()
 			break
 		}
 	}
-	table.Render()
 	return nil
 }
 
-func RunSearch() error {
-	ss, err := bilibili.GetSearch(search, "10")
+func RunSearch(s string) error {
+	ss, err := bilibili.GetSearch(s, "10")
 	if err != nil {
 		return err
 	}
@@ -228,6 +299,10 @@ func RunSearch() error {
 			break
 		}
 	}
+	if table.NumLines() == 0 {
+		fmt.Println("No relevant results were found.")
+		return nil
+	}
 	table.Render()
 	return nil
 }
@@ -242,6 +317,10 @@ func RunListLanguage(id string) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("Title:", info.Data.Season.Title)
+	if len(epList.Data.Sections) == 0 {
+		return fmt.Errorf("Episode not found Or not yet aired")
+	}
 
 	episode, err := bilibili.GetEpisode(epList.Data.Sections[0].Episodes[0].EpisodeID.String())
 	if err != nil {
@@ -252,7 +331,6 @@ func RunListLanguage(id string) error {
 	for _, s := range episode.Data.Subtitles {
 		table.Append([]string{s.Key, s.Title})
 	}
-	fmt.Println("Title:", info.Data.Season.Title)
 	table.Render()
 	return nil
 }
@@ -266,11 +344,14 @@ func RunListSection(id string) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("Title:", info.Data.Season.Title)
+	if len(epList.Data.Sections) == 0 {
+		return fmt.Errorf("Episode not found Or not yet aired")
+	}
 	table := newTable([]string{"#", "episode", "title"})
 	for i, s := range epList.Data.Sections {
 		table.Append([]string{strconv.Itoa(i + 1), s.EpListTitle, s.Title})
 	}
-	fmt.Println("Title:", info.Data.Season.Title)
 	table.Render()
 	return nil
 }
@@ -284,6 +365,10 @@ func RunListEpisode(id string) error {
 	epList, err := bilibili.GetEpisodes(id)
 	if err != nil {
 		return err
+	}
+	fmt.Println("Title:", info.Data.Season.Title)
+	if len(epList.Data.Sections) == 0 {
+		return fmt.Errorf("Episode not found Or not yet aired")
 	}
 	table := newTable([]string{"#", "section", "title"})
 	sectionIndex := utils.ListSelect(sectionSelect, len(epList.Data.Sections))
@@ -300,7 +385,6 @@ func RunListEpisode(id string) error {
 		}
 		maxEp += len(j.Episodes)
 	}
-	fmt.Println("Title:", info.Data.Season.Title)
 	table.Render()
 	return nil
 }
