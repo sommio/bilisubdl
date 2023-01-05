@@ -3,7 +3,6 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -35,7 +34,7 @@ func Request(url string, query map[string]string) (*Response, error) {
 		return nil, err
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("http error code %d %s", resp.StatusCode, resp.Status)
 	}
 
@@ -43,13 +42,9 @@ func Request(url string, query map[string]string) (*Response, error) {
 }
 
 func (resp *Response) Json(t interface{}) error {
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
 	defer resp.Body.Close()
 
-	err = json.Unmarshal(body, &t)
+	err := json.NewDecoder(resp.Body).Decode(&t)
 	if err != nil {
 		return err
 	}
@@ -95,8 +90,10 @@ func WriteFile(filename string, content []byte, mTime time.Time) error {
 func ListSelect(list []string, max int) []int {
 	var item []int
 	for _, s := range list {
-		if strings.Contains(s, "-") {
-			b := strings.Split(s, "-")
+		if b := strings.Split(s, "-"); len(b) > 1 {
+			if b[0] == "" {
+				continue
+			}
 			b0, _ := strconv.Atoi(b[0])
 			b1, _ := strconv.Atoi(b[1])
 			for i := b0; i <= b1; i++ {

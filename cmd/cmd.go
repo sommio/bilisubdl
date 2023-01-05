@@ -45,7 +45,7 @@ var dlCmd = &cobra.Command{
 	Example: "bilisubdl dl 37738 1042594 -l th",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		for _, s := range args {
-			err := Run(s)
+			err := runDl(s)
 			if err != nil {
 				return fmt.Errorf("[ID: %s] %w", s, err)
 			}
@@ -67,7 +67,7 @@ var searchCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := RunSearch(args[0])
+		err := runSearch(args[0])
 		if err != nil {
 			return fmt.Errorf("[keyword: %s] %w", args[0], err)
 		}
@@ -81,9 +81,9 @@ var timelineCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			return RunTimeline("")
+			return runTimeline("")
 		}
-		return RunTimeline(args[0])
+		return runTimeline(args[0])
 	},
 	Example: "bilisubdl timeline\nbilisubdl timeline sun",
 }
@@ -144,7 +144,7 @@ func init() {
 	listCmd.MarkFlagsMutuallyExclusive("language", "section-range", "episode-range")
 }
 
-func Run(id string) error {
+func runDl(id string) error {
 	var (
 		title, filename string
 		maxEp           int
@@ -162,31 +162,27 @@ func Run(id string) error {
 	title = utils.CleanText(info.Data.Season.Title)
 	sectionIndex := utils.ListSelect(sectionSelect, len(epList.Data.Sections))
 	for ji, j := range epList.Data.Sections {
-		if sectionSelect != nil && !slices.Contains(sectionIndex, ji+1) {
-			continue
-		}
-		episodeIndex := utils.ListSelect(episodeSelect, maxEp+len(j.Episodes))
-		for si, s := range j.Episodes {
-			if episodeSelect != nil && !slices.Contains(episodeIndex, maxEp+si+1) {
-				continue
-			}
-			filename = filepath.Join(output, title, fmt.Sprintf("%s.%s", utils.CleanText(s.TitleDisplay), language))
+		if sectionSelect == nil || slices.Contains(sectionIndex, ji+1) {
+			episodeIndex := utils.ListSelect(episodeSelect, maxEp+len(j.Episodes))
+			for si, s := range j.Episodes {
+				if episodeSelect == nil || slices.Contains(episodeIndex, maxEp+si+1) {
+					filename = filepath.Join(output, title, fmt.Sprintf("%s.%s", utils.CleanText(s.TitleDisplay), language))
 
-			err = downloadSub(s.EpisodeID.String(), filename, s.PublishTime)
-			if err != nil {
-				return err
+					if err := downloadSub(s.EpisodeID.String(), filename, s.PublishTime); err != nil {
+						return err
+					}
+				}
 			}
+			maxEp += len(j.Episodes)
 		}
-		maxEp += len(j.Episodes)
 	}
 	return nil
 }
 
-func RunDlEpisode(ids []string) error {
+func runDlEpisode(ids []string) error {
 	var filename string
 	if output != "" {
-		err := os.MkdirAll(output, 0700)
-		if err != nil {
+		if err := os.MkdirAll(output, 0700); os.IsExist(err) {
 			return err
 		}
 	}
@@ -198,8 +194,7 @@ func RunDlEpisode(ids []string) error {
 		}
 		filename = filepath.Join(output, filename)
 
-		err := downloadSub(id, filename, time.Now())
-		if err != nil {
+		if err := downloadSub(id, filename, time.Now()); err != nil {
 			return err
 		}
 	}
@@ -208,7 +203,7 @@ func RunDlEpisode(ids []string) error {
 
 func downloadSub(id, filename string, publishTime time.Time) error {
 	for _, k := range []string{".srt", ".ass"} {
-		if _, err := os.Stat(filename + k); err == nil && !overwrite {
+		if _, err := os.Stat(filename + k); !os.IsNotExist(err) && !overwrite {
 			if !quiet {
 				fmt.Println("#", filename+k)
 			}
@@ -216,13 +211,12 @@ func downloadSub(id, filename string, publishTime time.Time) error {
 		}
 	}
 
-	err := os.MkdirAll(filepath.Join(filepath.Dir(filename)), 0700)
-	if err != nil {
+	if err := os.MkdirAll(filepath.Join(filepath.Dir(filename)), 0700); os.IsExist(err) {
 		return err
 	}
 
 	episode, err := bilibili.GetEpisode(id)
-	if err != nil {
+	if episode == nil {
 		return err
 	}
 
@@ -231,17 +225,17 @@ func downloadSub(id, filename string, publishTime time.Time) error {
 		return err
 	}
 
-	err = utils.WriteFile(filename+fileType, sub, publishTime)
-	if err != nil {
+	if err := utils.WriteFile(filename+fileType, sub, publishTime); err != nil {
 		return err
 	}
+
 	if !quiet {
 		fmt.Println("*", filename+fileType)
 	}
 	return nil
 }
 
-func RunTimeline(day string) error {
+func runTimeline(day string) error {
 	tl, err := bilibili.GetTimeline()
 	if err != nil {
 		return err
@@ -252,30 +246,30 @@ func RunTimeline(day string) error {
 			return err
 		}
 		fmt.Println(string(b))
-		return nil
-	}
-	for _, s := range tl.Data.Items {
-		if day == "" && s.IsToday {
-			day = s.DayOfWeek
-		}
-		if s.DayOfWeek == strings.ToUpper(day) {
-			if len(s.Cards) == 0 {
-				fmt.Println("No updates")
-				return nil
+	} else {
+		for _, s := range tl.Data.Items {
+			if day == "" && s.IsToday {
+				day = s.DayOfWeek
 			}
-			table := newTable(nil)
-			for _, j := range s.Cards {
-				table.Append([]string{j.SeasonID, j.Title, j.IndexShow})
+			if s.DayOfWeek == strings.ToUpper(day) {
+				if len(s.Cards) == 0 {
+					fmt.Println("No updates")
+				} else {
+					table := newTable(nil)
+					for _, j := range s.Cards {
+						table.Append([]string{j.SeasonID, j.Title, j.IndexShow})
+					}
+					table.SetHeader([]string{"ID", fmt.Sprintf("Title (%s %s)", s.DayOfWeek, s.FullDateText), "Status"})
+					table.Render()
+					break
+				}
 			}
-			table.SetHeader([]string{"ID", fmt.Sprintf("Title (%s %s)", s.DayOfWeek, s.FullDateText), "Status"})
-			table.Render()
-			break
 		}
 	}
 	return nil
 }
 
-func RunSearch(s string) error {
+func runSearch(s string) error {
 	ss, err := bilibili.GetSearch(s, "10")
 	if err != nil {
 		return err
@@ -286,22 +280,22 @@ func RunSearch(s string) error {
 			return err
 		}
 		fmt.Println(string(b))
-		return nil
-	}
-	table := newTable([]string{"ID", "Title", "Status"})
-	for _, j := range ss.Data {
-		if j.Module == "ogv" || j.Module == "ogv_subject" {
-			for _, s := range j.Items {
-				table.Append([]string{s.SeasonID.String(), s.Title, s.IndexShow})
+	} else {
+		table := newTable([]string{"ID", "Title", "Status"})
+		for _, j := range ss.Data {
+			if j.Module == "ogv" || j.Module == "ogv_subject" {
+				for _, s := range j.Items {
+					table.Append([]string{s.SeasonID.String(), s.Title, s.IndexShow})
+				}
+				break
 			}
-			break
+		}
+		if table.NumLines() == 0 {
+			fmt.Println("No relevant results were found.")
+		} else {
+			table.Render()
 		}
 	}
-	if table.NumLines() == 0 {
-		fmt.Println("No relevant results were found.")
-		return nil
-	}
-	table.Render()
 	return nil
 }
 
@@ -334,30 +328,27 @@ func runList(ID string) error {
 			table.Append([]string{s.Key, s.Title})
 		}
 	case listSection:
-		table.SetHeader([]string{"#", "episode", "title"})
+		table.SetHeader([]string{"#", "section", "title"})
 		sectionIndex := utils.ListSelect(sectionSelect, len(epList.Data.Sections))
 		for i, s := range epList.Data.Sections {
-			if sectionSelect != nil && !slices.Contains(sectionIndex, i+1) {
-				continue
+			if sectionSelect == nil || slices.Contains(sectionIndex, i+1) {
+				table.Append([]string{strconv.Itoa(i + 1), s.EpListTitle, s.Title})
 			}
-			table.Append([]string{strconv.Itoa(i + 1), s.EpListTitle, s.Title})
 		}
 	case listEpisode:
 		var maxEp int
-		table.SetHeader([]string{"#", "section", "title"})
+		table.SetHeader([]string{"#", "episode", "title"})
 		sectionIndex := utils.ListSelect(sectionSelect, len(epList.Data.Sections))
 		for ji, j := range epList.Data.Sections {
-			if sectionSelect != nil && !slices.Contains(sectionIndex, ji+1) {
-				continue
-			}
-			episodeIndex := utils.ListSelect(episodeSelect, maxEp+len(j.Episodes))
-			for si, s := range j.Episodes {
-				if episodeSelect != nil && !slices.Contains(episodeIndex, maxEp+si+1) {
-					continue
+			if sectionSelect == nil || slices.Contains(sectionIndex, ji+1) {
+				episodeIndex := utils.ListSelect(episodeSelect, maxEp+len(j.Episodes))
+				for si, s := range j.Episodes {
+					if episodeSelect == nil || slices.Contains(episodeIndex, maxEp+si+1) {
+						table.Append([]string{s.ShortTitleDisplay, strconv.Itoa(ji + 1), s.LongTitleDisplay})
+					}
 				}
-				table.Append([]string{s.ShortTitleDisplay, strconv.Itoa(ji + 1), s.LongTitleDisplay})
+				maxEp += len(j.Episodes)
 			}
-			maxEp += len(j.Episodes)
 		}
 	}
 	table.Render()

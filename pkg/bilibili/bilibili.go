@@ -47,7 +47,7 @@ func GetInfo(id string) (*Info, error) {
 }
 
 func GetEpisodes(id string) (*Episodes, error) {
-	var epList = new(Episodes)
+	epList := new(Episodes)
 	query := map[string]string{
 		"s_locale":  "en_US",
 		"season_id": id,
@@ -85,7 +85,7 @@ func GetEpisode(id string) (*Episode, error) {
 }
 
 func (s *Episode) Subtitle(language string) ([]byte, string, error) {
-	var index int = -1
+	index := -1
 	for i, s := range s.Data.Subtitles {
 		if s.Key == language {
 			index = i
@@ -107,9 +107,8 @@ func (s *Episode) Subtitle(language string) ([]byte, string, error) {
 	fileType := filepath.Ext(resp.Request.URL.Path)
 	switch fileType {
 	case ".json":
-		var subJson = new(Subtitle)
-		err := resp.Json(subJson)
-		if err != nil {
+		subJson := new(Subtitle)
+		if err := resp.Json(subJson); err != nil {
 			return nil, "", err
 		}
 		return []byte(jsonToSRT(subJson)), ".srt", nil
@@ -123,10 +122,9 @@ func (s *Episode) Subtitle(language string) ([]byte, string, error) {
 }
 
 func jsonToSRT(subJson *Subtitle) string {
-	var sub []string
-	var content string
+	sub := make([]string, 0, len(subJson.Body))
 	for i, s := range subJson.Body {
-		content = s.Content
+		content := s.Content
 		if s.Location != 2 {
 			content = fmt.Sprintf("{\\an%d}%s", s.Location, content)
 		}
