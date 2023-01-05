@@ -101,13 +101,9 @@ var listCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		switch {
-		case listLang:
-			return RunListLanguage(args[0])
-		case listSection:
-			return RunListSection(args[0])
-		case listEpisode:
-			return RunListEpisode(args[0])
+		err := runList(args[0])
+		if err != nil {
+			return err
 		}
 		return nil
 	},
@@ -117,8 +113,8 @@ func init() {
 	RootCmd.AddCommand(dlCmd, searchCmd, timelineCmd, listCmd)
 
 	selectFlags := flag.NewFlagSet("selectFlags", flag.ExitOnError)
-	selectFlags.StringArrayVar(&sectionSelect, "section", nil, "Section select (e.g. 5,8-10)")
-	selectFlags.StringArrayVar(&episodeSelect, "episode", nil, "Episode select (e.g. 5,8-10)")
+	selectFlags.StringArrayVar(&sectionSelect, "section-range", nil, "Section select (e.g. 5,8-10)")
+	selectFlags.StringArrayVar(&episodeSelect, "episode-range", nil, "Episode select (e.g. 5,8-10)")
 
 	dlFlag := dlCmd.PersistentFlags()
 	dlFlag.StringVarP(&language, "language", "l", "", "Subtitle language to download (e.g. en)")
@@ -143,7 +139,9 @@ func init() {
 	listFlag.BoolVarP(&listLang, "language", "L", false, "List available subtitle language")
 	listFlag.BoolVarP(&listSection, "section", "S", false, "List available section")
 	listFlag.BoolVarP(&listEpisode, "episode", "E", false, "List available episode")
+	listFlag.AddFlagSet(selectFlags)
 	listCmd.MarkFlagsMutuallyExclusive("language", "section", "episode")
+	listCmd.MarkFlagsMutuallyExclusive("language", "section-range", "episode-range")
 }
 
 func Run(id string) error {
@@ -307,85 +305,63 @@ func RunSearch(s string) error {
 	return nil
 }
 
-func RunListLanguage(id string) error {
-	info, err := bilibili.GetInfo(id)
+func runList(ID string) error {
+	info, err := bilibili.GetInfo(ID)
 	if err != nil {
 		return err
 	}
 
-	epList, err := bilibili.GetEpisodes(id)
+	epList, err := bilibili.GetEpisodes(ID)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Title:", info.Data.Season.Title)
+
 	if len(epList.Data.Sections) == 0 {
-		return fmt.Errorf("Episode not found Or not yet aired")
+		return fmt.Errorf("Episode list not found Or not yet aired")
 	}
 
-	episode, err := bilibili.GetEpisode(epList.Data.Sections[0].Episodes[0].EpisodeID.String())
-	if err != nil {
-		return err
-	}
-
-	table := newTable([]string{"Key", "Lang"})
-	for _, s := range episode.Data.Subtitles {
-		table.Append([]string{s.Key, s.Title})
-	}
-	table.Render()
-	return nil
-}
-
-func RunListSection(id string) error {
-	info, err := bilibili.GetInfo(id)
-	if err != nil {
-		return err
-	}
-	epList, err := bilibili.GetEpisodes(id)
-	if err != nil {
-		return err
-	}
 	fmt.Println("Title:", info.Data.Season.Title)
-	if len(epList.Data.Sections) == 0 {
-		return fmt.Errorf("Episode not found Or not yet aired")
-	}
-	table := newTable([]string{"#", "episode", "title"})
-	for i, s := range epList.Data.Sections {
-		table.Append([]string{strconv.Itoa(i + 1), s.EpListTitle, s.Title})
-	}
-	table.Render()
-	return nil
-}
+	table := newTable(nil)
 
-func RunListEpisode(id string) error {
-	var maxEp int
-	info, err := bilibili.GetInfo(id)
-	if err != nil {
-		return err
-	}
-	epList, err := bilibili.GetEpisodes(id)
-	if err != nil {
-		return err
-	}
-	fmt.Println("Title:", info.Data.Season.Title)
-	if len(epList.Data.Sections) == 0 {
-		return fmt.Errorf("Episode not found Or not yet aired")
-	}
-	table := newTable([]string{"#", "section", "title"})
-	sectionIndex := utils.ListSelect(sectionSelect, len(epList.Data.Sections))
-	for ji, j := range epList.Data.Sections {
-		if sectionSelect != nil && !slices.Contains(sectionIndex, ji+1) {
-			continue
+	switch {
+	case listLang:
+		episode, err := bilibili.GetEpisode(epList.Data.Sections[0].Episodes[0].EpisodeID.String())
+		if err != nil {
+			return err
 		}
-		episodeIndex := utils.ListSelect(episodeSelect, maxEp+len(j.Episodes))
-		for si, s := range j.Episodes {
-			if episodeSelect != nil && !slices.Contains(episodeIndex, maxEp+si+1) {
+		table.SetHeader([]string{"Key", "Lang"})
+		for _, s := range episode.Data.Subtitles {
+			table.Append([]string{s.Key, s.Title})
+		}
+	case listSection:
+		table.SetHeader([]string{"#", "episode", "title"})
+		sectionIndex := utils.ListSelect(sectionSelect, len(epList.Data.Sections))
+		for i, s := range epList.Data.Sections {
+			if sectionSelect != nil && !slices.Contains(sectionIndex, i+1) {
 				continue
 			}
-			table.Append([]string{s.ShortTitleDisplay, strconv.Itoa(ji + 1), s.LongTitleDisplay})
+			table.Append([]string{strconv.Itoa(i + 1), s.EpListTitle, s.Title})
 		}
-		maxEp += len(j.Episodes)
+	case listEpisode:
+		var maxEp int
+		table.SetHeader([]string{"#", "section", "title"})
+		sectionIndex := utils.ListSelect(sectionSelect, len(epList.Data.Sections))
+		for ji, j := range epList.Data.Sections {
+			if sectionSelect != nil && !slices.Contains(sectionIndex, ji+1) {
+				continue
+			}
+			episodeIndex := utils.ListSelect(episodeSelect, maxEp+len(j.Episodes))
+			for si, s := range j.Episodes {
+				if episodeSelect != nil && !slices.Contains(episodeIndex, maxEp+si+1) {
+					continue
+				}
+				table.Append([]string{s.ShortTitleDisplay, strconv.Itoa(ji + 1), s.LongTitleDisplay})
+			}
+			maxEp += len(j.Episodes)
+		}
 	}
 	table.Render()
+
 	return nil
 }
 
