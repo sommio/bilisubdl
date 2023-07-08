@@ -1,0 +1,8 @@
+
+test
+temp
+makefile
+*.exe
+dist
+.vscode
+*test*
